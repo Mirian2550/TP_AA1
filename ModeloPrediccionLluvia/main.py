@@ -1,3 +1,4 @@
+import pandas as pd
 class ModeloPrediccionLluvia:
     def __init__(self, archivo_datos):
         pass
@@ -8,10 +9,10 @@ class ModeloPrediccionLluvia:
     def preprocesar_datos(self):
         pass
 
-    def entrenar_regresión_lineal(self):
+    def entrenar_regresion_lineal(self):
         pass
 
-    def entrenar_regresión_regularizada(self, tipo_regularización):
+    def entrenar_regresion_regularizada(self, tipo_regularización):
         pass
 
     def evaluar_modelo(self, modelo, X_test, y_test, y_pred):
