@@ -1,9 +1,14 @@
 import pandas as pd
 class ModeloPrediccionLluvia:
-    def __init__(self, archivo_datos):
-        pass
-
+    def __init__(self, file):
+        self.data: pd.read_csv(file)
+        self.data_clean: None
     def limpiar_datos(self):
+        ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
+        datos_filtrados = self.data[self.data['Location'].isin(self.ciudades)]
+        print(datos_filtrados)
+
+    def visualizar_datos(self):
         pass
 
     def preprocesar_datos(self):
@@ -19,4 +24,5 @@ class ModeloPrediccionLluvia:
         pass
 
     def ejecutar_experimento(self):
+        self.limpiar_datos()
         pass
