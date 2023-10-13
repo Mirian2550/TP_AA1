@@ -1,26 +1,42 @@
 import numpy as np
 import pandas as pd
-from matplotlib.widgets import Lasso
-from scipy.stats import stats
-import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from sklearn.linear_model import Lasso
 from sklearn.linear_model import ElasticNet, Ridge, LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import cross_val_score
+
+
+def evaluar_modelo(y_true, y_pred):
+    mse = mean_squared_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+    rmse = np.sqrt(mse)
+    mae = np.mean(np.abs(y_true - y_pred))
+    # Calcula el MAPE
+    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+    return {
+        "MSE": mse,
+        "R2": r2,
+        "RMSE": rmse,
+        "MAE": mae,
+        "MAPE": mape
+    }
 
 
 class ModeloPrediccionLluvia:
     def __init__(self, file):
         self.data = pd.read_csv(file)
         self.data_clean = None
+
     def limpiar_datos(self):
         ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
         datos_filtrados = self.data[self.data['Location'].isin(ciudades)]
         datos_filtrados = datos_filtrados.drop('WindGustSpeed', axis=1)
 
-        datos_filtrados.loc[:,  'MinTemp'] = datos_filtrados.groupby('Location')['MinTemp'].ffill()
+        datos_filtrados.loc[:, 'MinTemp'] = datos_filtrados.groupby('Location')['MinTemp'].ffill()
         datos_filtrados.loc[:, 'MaxTemp'] = datos_filtrados.groupby('Location')['MaxTemp'].ffill()
         datos_filtrados.loc[:, 'Rainfall'] = datos_filtrados['Rainfall'].fillna(0)
         datos_filtrados.loc[:, 'Temp9am'] = datos_filtrados['Temp9am'].ffill()
@@ -41,10 +57,9 @@ class ModeloPrediccionLluvia:
         datos_filtrados.loc[:, 'RainToday'] = datos_filtrados['RainToday'].fillna('sin datos')
         datos_filtrados.loc[:, 'RainTomorrow'] = datos_filtrados['RainTomorrow'].ffill()
 
-
         # datos_filtrados[:,'WindGustDir'] = datos_filtrados['WindGustDir'].fillna('Desconocido', inplace=True)
         median_rainfall = datos_filtrados['RainfallTomorrow'].median()
-        datos_filtrados.loc[:,'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall)
+        datos_filtrados.loc[:, 'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall)
         self.data_clean = datos_filtrados
         columnas_nulas = self.data_clean.columns[self.data_clean.isnull().any()]
         if columnas_nulas.empty:
@@ -81,11 +96,12 @@ class ModeloPrediccionLluvia:
         print(f"Cantidad total de datos: {total_datos}")
         print(f"Porcentaje de datos nulos en todo el conjunto de datos: {porcentaje_nulos_por_columna.mean():.2f}%")
         """
+
     def visualizar_datos(self):
-        columns_tmp = [ 'MinTemp', 'MaxTemp', 'Rainfall',
-       'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
-       'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
-       'Temp9am', 'Temp3pm',  'RainfallTomorrow']
+        columns_tmp = ['MinTemp', 'MaxTemp', 'Rainfall',
+                       'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
+                       'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
+                       'Temp9am', 'Temp3pm', 'RainfallTomorrow']
 
         rows = 4
         cols = 4
@@ -105,7 +121,7 @@ class ModeloPrediccionLluvia:
 
         # Boxplots
         fig, axes = plt.subplots(rows, cols, figsize=(8, 8))
-        fig.subplots_adjust(hspace=0.8, wspace=0.5)  
+        fig.subplots_adjust(hspace=0.8, wspace=0.5)
 
         for i, column in enumerate(columns_tmp):
             sns.boxplot(x=self.data_clean[column], ax=axes[i // cols, i % cols])
@@ -119,7 +135,7 @@ class ModeloPrediccionLluvia:
 
         # Scatterplots
         fig, axes = plt.subplots(rows, cols, figsize=(8, 8))
-        fig.subplots_adjust(hspace=0.8, wspace=0.5)  
+        fig.subplots_adjust(hspace=0.8, wspace=0.5)
 
         for i, column in enumerate(columns_tmp):
             sns.scatterplot(x=column, y='RainfallTomorrow', data=self.data_clean, ax=axes[i // cols, i % cols])
@@ -149,11 +165,12 @@ class ModeloPrediccionLluvia:
         Porcentaje de clase "Yes" (Lloverá): 22.98%
         Porcentaje de clase "No" (No lloverá): 77.02%
         """
+
     def preprocesar_datos(self):
         columns_tmp = ['MinTemp', 'MaxTemp',
-                   'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
-                   'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
-                   'Temp9am', 'Temp3pm']
+                       'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
+                       'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
+                       'Temp9am', 'Temp3pm']
 
         for column in columns_tmp:
             # Calcular el rango intercuartílico (IQR)
@@ -166,53 +183,56 @@ class ModeloPrediccionLluvia:
             upper_limit = Q3 + 1.5 * IQR
 
             # Reemplazar valores atípicos
-            self.data_clean.loc[(self.data_clean[column] < lower_limit) | (self.data_clean[column] > upper_limit), column] = self.data_clean[column].mean()
+            self.data_clean.loc[
+                (self.data_clean[column] < lower_limit) | (self.data_clean[column] > upper_limit), column] = \
+                self.data_clean[column].mean()
 
-
-    def entrenar_regresion_lineal(self):
+    def entrenar_regresion_lineal(self, normalize=True, cross_val=True):
         # Selecciona las columnas de características y la variable objetivo
         columnas_caracteristicas = ['Rainfall', 'Humidity3pm', 'Cloud3pm']
         variable_objetivo = 'RainfallTomorrow'
-
-        # Divide los datos en conjuntos de entrenamiento y prueba
         X = self.data_clean[columnas_caracteristicas]
         y = self.data_clean[variable_objetivo]
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-        # Imputa valores nulos en la variable objetivo (y_train) utilizando la media
-        imputer = SimpleImputer(strategy='mean')
-        y_train = imputer.fit_transform(y_train.values.reshape(-1, 1))
+        if cross_val:
+            modelo = LinearRegression()
+            if normalize:
+                scaler = StandardScaler()
+                X = scaler.fit_transform(X)
+            scores = cross_val_score(modelo, X, y, cv=5, scoring='neg_mean_squared_error')
+            mse_scores = -scores  # Convertir neg_mean_squared_error a positivo
+            return mse_scores.mean()
+        else:
+            modelo = LinearRegression()
+            if normalize:
+                # Si se desea normalizar las características, utiliza StandardScaler
+                scaler = StandardScaler()
+                X = scaler.fit_transform(X)
+            # Entrena el modelo
+            modelo.fit(X, y)
+            if normalize:
+                # Si las características se normalizaron, podemos inspeccionar los coeficientes
+                coeficientes = modelo.coef_
+                print("Coeficientes de características normalizadas:")
+                for caracteristica, coef in zip(columnas_caracteristicas, coeficientes):
+                    print(f"{caracteristica}: {coef}")
 
-        # Crea un modelo de regresión lineal
-        modelo = LinearRegression()
+            # Realiza predicciones en el conjunto de prueba
+            y_pred = modelo.predict(X)
+            return y, y_pred
 
-        # Entrena el modelo
-        modelo.fit(X_train, y_train)
-
-        # Realiza predicciones en el conjunto de prueba
-        y_pred = modelo.predict(X_test)
-
-        return y_test, y_pred
-
-    def entrenar_regresion_regularizada(self, tipo_regularizacion, alpha=1.0):
-        # Selecciona las columnas de características y la variable objetivo
+    def entrenar_regresion_regularizada(self, config: dict):
         columnas_caracteristicas = ['Rainfall', 'Humidity3pm', 'Cloud3pm']
         variable_objetivo = 'RainfallTomorrow'
-
-        # Divide los datos en conjuntos de entrenamiento y prueba
         X = self.data_clean[columnas_caracteristicas]
         y = self.data_clean[variable_objetivo]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-        if tipo_regularizacion == 'Lasso':
-            # Crea un modelo de regresión Lasso
-            modelo = Lasso(alpha=alpha)
-        elif tipo_regularizacion == 'Ridge':
-            # Crea un modelo de regresión Ridge
-            modelo = Ridge(alpha=alpha)
-        elif tipo_regularizacion == 'ElasticNet':
-            # Crea un modelo de regresión Elastic Net
-            modelo = ElasticNet(alpha=alpha, l1_ratio=0.5)
+        if config['tipo_regularizacion'] == 'Lasso':
+            modelo = Lasso(alpha=config['alpha'])
+        elif config['tipo_regularizacion'] == 'Ridge':
+            modelo = Ridge(alpha=config['alpha'])
+        elif config['tipo_regularizacion'] == 'ElasticNet':
+            modelo = ElasticNet(alpha=config['alpha'], l1_ratio=0.5)
         else:
             raise ValueError("Tipo de regularización no válido")
 
@@ -224,63 +244,26 @@ class ModeloPrediccionLluvia:
 
         return y_test, y_pred
 
-    def evaluar_modelo(self, y_true, y_pred):
-        # Imputa valores nulos en y_true y y_pred utilizando la media
-        imputer = SimpleImputer(strategy='mean')
-
-        # Asegura que y_true y y_pred sean arreglos 1D
-        y_true = y_true.reshape(-1)
-        y_pred = y_pred.reshape(-1)
-
-        # Calcula métricas de rendimiento
-        mse = mean_squared_error(y_true, y_pred)
-        r2 = r2_score(y_true, y_pred)
-        rmse = np.sqrt(mse)
-        mae = np.mean(np.abs(y_true - y_pred))
-        mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-
-        return {
-            "MSE": mse,
-            "R2": r2,
-            "RMSE": rmse,
-            "MAE": mae,
-            "MAPE": mape
-        }
-
     def ejecutar_experimento(self):
         self.limpiar_datos()
         self.visualizar_datos()
         self.preprocesar_datos()
         self.visualizar_datos()
-"""
-        # Visualiza los datos
-        # self.visualizar_datos()
+        modelos = [
+            ("Regresión Lineal", self.entrenar_regresion_lineal, {"normalize": True, "cross_val": True}),
+            ("Regresión Lasso", self.entrenar_regresion_regularizada, {"tipo_regularizacion": "Lasso", "alpha": 0.01}),
+            ("Regresión Ridge", self.entrenar_regresion_regularizada, {"tipo_regularizacion": "Ridge", "alpha": 0.01}),
+            ("Regresión ElasticNet", self.entrenar_regresion_regularizada, {
+                "tipo_regularizacion": "ElasticNet",
+                "alpha": 0.01
+            }),
+        ]
 
-        # Preprocesa los datos si es necesario
-        self.preprocesar_datos()
-
-        # Entrenamiento y evaluación de modelos
-        # Entrenar y evaluar el modelo de regresión lineal
-        y_true, y_pred = self.entrenar_regresion_lineal()
-        metricas = self.evaluar_modelo(y_true, y_pred)
-        print("Métricas del modelo de regresión lineal:")
-        print(metricas)
-
-        # Entrenar y evaluar el modelo de regresión regularizada (Lasso)
-        y_true, y_pred = self.entrenar_regresion_regularizada("Lasso", alpha=0.01)
-        metricas = self.evaluar_modelo(y_true, y_pred)
-        print("Métricas del modelo de regresión Lasso:")
-        print(metricas)
-
-        # Entrenar y evaluar el modelo de regresión regularizada (Ridge)
-        y_true, y_pred = self.entrenar_regresion_regularizada("Ridge", alpha=0.01)
-        metricas = self.evaluar_modelo(y_true, y_pred)
-        print("Métricas del modelo de regresión Ridge:")
-        print(metricas)
-
-        # Entrenar y evaluar el modelo de regresión regularizada (ElasticNet)
-        y_true, y_pred = self.entrenar_regresion_regularizada("ElasticNet", alpha=0.01)
-        metricas = self.evaluar_modelo(y_true, y_pred)
-        print("Métricas del modelo de regresión ElasticNet:")
-        print(metricas)
-"""
+        for nombre_modelo, funcion_entrenamiento, *configuracion in modelos:
+            if len(configuracion) > 0:
+                y_true, y_pred = funcion_entrenamiento(*configuracion)
+            else:
+                y_true, y_pred = funcion_entrenamiento()
+            metricas = evaluar_modelo(y_true, y_pred)
+            print(f"Métricas del modelo {nombre_modelo}:")
+            print(metricas)
