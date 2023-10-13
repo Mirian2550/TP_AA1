@@ -165,8 +165,41 @@ class ModeloPrediccionLluvia:
     def preprocesar_datos(self):
         """
         Realiza el preprocesamiento de los datos limpios, incluyendo la detección y manejo de valores atípicos.
+
+        redondear a 1 decimal
+        Evaporation, sunshine, WindSpeed9am, WindSpeed3pm, Cloud9am, Cloud3pm negativos poner en 0 
+        Humidity que no supere 100.0
         """
         try:
+
+            columns_to_round = ['MinTemp', 'MaxTemp',
+                                'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
+                                'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
+                                'Temp9am', 'Temp3pm']
+            columns_negative_to_0 = ['Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Cloud9am', 'Cloud3pm']
+            columns_to_cap = ['Humidity9am', 'Humidity3pm']
+
+            # Redondear a 1 decimal después de la coma
+            for column in columns_to_round:
+                if column in self.data_clean.columns:
+                    self.data_clean[column] = self.data_clean[column].round(1)
+
+            # Poner en 0 valores negativos en las columnas especificadas
+            for column in columns_negative_to_0:
+                if column in self.data_clean.columns:
+                    self.data_clean[column] = self.data_clean[column].apply(lambda x: max(0, x))
+
+            # Reemplazar valores negativos por 0 en las columnas especificadas
+            for column in columns_negative_to_0:
+                if column in self.data_clean.columns:
+                    self.data_clean[column] = self.data_clean[column].apply(lambda x: max(0, x))
+
+            # Asegurarse de que la Humedad no supere el 100.0
+            for column in columns_to_cap:
+                if column in self.data_clean.columns:
+                    self.data_clean[column] = self.data_clean[column].apply(lambda x: min(100.0, x))
+
+
             columns_tmp = ['MinTemp', 'MaxTemp',
                            'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
                            'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
@@ -181,11 +214,12 @@ class ModeloPrediccionLluvia:
                 # Definir los límites para identificar valores atípicos
                 lower_limit = Q1 - 1.5 * IQR
                 upper_limit = Q3 + 1.5 * IQR
+                print('en: ', [column], 'inferior al 1er cuartil: ', lower_limit, 'q1: ', Q1, 'q3: ', Q3, 'limite superior: ', upper_limit)
 
                 # Reemplazar valores atípicos
-                self.data_clean.loc[
-                    (self.data_clean[column] < lower_limit) | (self.data_clean[column] > upper_limit), column] = \
-                    self.data_clean[column].mean()
+                #self.data_clean.loc[
+                    #(self.data_clean[column] < lower_limit) | (self.data_clean[column] > upper_limit), column] = \
+                    #self.data_clean[column].mean()
         except Exception as e:
             self.logger.error(f"Error en el preprocesamiento de datos: {str(e)}")
             raise ValueError(f"Error en el preprocesamiento de datos: {str(e)}")
@@ -262,7 +296,7 @@ class ModeloPrediccionLluvia:
         """
         try:
             self.limpiar_datos()
-            self.visualizar_datos()
+            #self.visualizar_datos()
             self.preprocesar_datos()
 
             modelos = [
