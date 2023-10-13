@@ -1,11 +1,25 @@
-ModeloPrediccionLluvia
-
-
-
+import numpy as np
 import pandas as pd
-data = pd.read_csv('weatherAUS.csv')
+from matplotlib.widgets import Lasso
+from scipy.stats import stats
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.linear_model import ElasticNet, Ridge, LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
+
+data = pd.read_csv('data/weatherAUS.csv')
 
 print(data.head)
+#[145412 rows x 25 columns]>
+
+cities_of_interest = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
+filtered_data = data[data['Location'].isin(cities_of_interest)]
+#print(filtered_data)
+#[15986 rows x 25 columns]
+
+
 """
 ‘RainTomorrow’ ‘RainfallTomorrow’ # son las principales
 Date, Location #no tocar
