@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import logging
 
+
 def evaluar_modelo(y_true, y_pred):
     """
     Evalúa un modelo de regresión y calcula diversas métricas.
@@ -33,12 +34,14 @@ def evaluar_modelo(y_true, y_pred):
         "MAPE": mape
     }
 
+
 class ModeloPrediccionLluvia:
     """
     Inicializa una instancia de la clase ModeloPrediccionLluvia.
     Args:
         file (str): Ruta del archivo CSV que contiene los datos.
     """
+
     def __init__(self, file):
         self.data = pd.read_csv(file)
         self.data_clean = None
@@ -171,34 +174,30 @@ class ModeloPrediccionLluvia:
         Humidity que no supere 100.0
         """
         try:
+            self.data_clean = self.data_clean.drop('Unnamed: 0', axis=1)
 
-            columns_to_round = ['MinTemp', 'MaxTemp',
-                                'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
+            columns_to_round = ['MinTemp',
+                                'MaxTemp',
+                                'Evaporation',
+                                'Sunshine',
+                                'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
                                 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
                                 'Temp9am', 'Temp3pm']
             columns_negative_to_0 = ['Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Cloud9am', 'Cloud3pm']
             columns_to_cap = ['Humidity9am', 'Humidity3pm']
 
-            # Redondear a 1 decimal después de la coma
             for column in columns_to_round:
                 if column in self.data_clean.columns:
                     self.data_clean[column] = self.data_clean[column].round(1)
 
-            # Poner en 0 valores negativos en las columnas especificadas
             for column in columns_negative_to_0:
                 if column in self.data_clean.columns:
-                    self.data_clean[column] = self.data_clean[column].apply(lambda x: max(0, x))
-
-            # Reemplazar valores negativos por 0 en las columnas especificadas
-            for column in columns_negative_to_0:
-                if column in self.data_clean.columns:
-                    self.data_clean[column] = self.data_clean[column].apply(lambda x: max(0, x))
+                    self.data_clean[column] = self.data_clean[column].clip(lower=0)
 
             # Asegurarse de que la Humedad no supere el 100.0
             for column in columns_to_cap:
                 if column in self.data_clean.columns:
-                    self.data_clean[column] = self.data_clean[column].apply(lambda x: min(100.0, x))
-
+                    self.data_clean[column] = self.data_clean[column].clip(upper=100)
 
             columns_tmp = ['MinTemp', 'MaxTemp',
                            'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
@@ -206,20 +205,14 @@ class ModeloPrediccionLluvia:
                            'Temp9am', 'Temp3pm']
 
             for column in columns_tmp:
-                # Calcular el rango intercuartílico (IQR)
-                Q1 = self.data_clean[column].quantile(0.25)
-                Q3 = self.data_clean[column].quantile(0.75)
-                IQR = Q3 - Q1
-
-                # Definir los límites para identificar valores atípicos
-                lower_limit = Q1 - 1.5 * IQR
-                upper_limit = Q3 + 1.5 * IQR
-                print('en: ', [column], 'inferior al 1er cuartil: ', lower_limit, 'q1: ', Q1, 'q3: ', Q3, 'limite superior: ', upper_limit)
-
-                # Reemplazar valores atípicos
-                #self.data_clean.loc[
-                    #(self.data_clean[column] < lower_limit) | (self.data_clean[column] > upper_limit), column] = \
-                    #self.data_clean[column].mean()
+                q1 = self.data_clean[column].quantile(0.25)
+                q3 = self.data_clean[column].quantile(0.75)
+                iqr = q3 - q1
+                lower_limit = round(q1 - 1.5 * iqr, 1)
+                upper_limit = round(q3 + 1.5 * iqr, 1)
+                self.data_clean = self.data_clean[
+                    (self.data_clean[column] >= lower_limit) & (self.data_clean[column] <= upper_limit)
+                    ]
         except Exception as e:
             self.logger.error(f"Error en el preprocesamiento de datos: {str(e)}")
             raise ValueError(f"Error en el preprocesamiento de datos: {str(e)}")
@@ -236,23 +229,23 @@ class ModeloPrediccionLluvia:
         try:
             columnas_caracteristicas = ['Rainfall', 'Humidity3pm', 'Cloud3pm']
             variable_objetivo = 'RainfallTomorrow'
-            X = self.data_clean[columnas_caracteristicas]
+            x = self.data_clean[columnas_caracteristicas]
             y = self.data_clean[variable_objetivo]
 
             modelo = LinearRegression()
             if normalize:
                 scaler = StandardScaler()
-                X = scaler.fit_transform(X)
+                x = scaler.fit_transform(x)
 
             # Entrena el modelo en todos los datos
-            modelo.fit(X, y)
+            modelo.fit(x, y)
             if normalize:
                 # Si las características se normalizaron, podemos inspeccionar los coeficientes
                 coeficientes = modelo.coef_
                 print("Coeficientes de características normalizadas:")
                 for caracteristica, coef in zip(columnas_caracteristicas, coeficientes):
                     print(f"{caracteristica}: {coef}")
-            y_pred = modelo.predict(X)
+            y_pred = modelo.predict(x)
             return y, y_pred
         except Exception as e:
             self.logger.error(f"Error en el entrenamiento de regresión lineal: {str(e)}")
@@ -271,9 +264,9 @@ class ModeloPrediccionLluvia:
         try:
             columnas_caracteristicas = ['Rainfall', 'Humidity3pm', 'Cloud3pm']
             variable_objetivo = 'RainfallTomorrow'
-            X = self.data_clean[columnas_caracteristicas]
+            x = self.data_clean[columnas_caracteristicas]
             y = self.data_clean[variable_objetivo]
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
             if config['tipo_regularizacion'] == 'Lasso':
                 modelo = Lasso(alpha=config['alpha'])
             elif config['tipo_regularizacion'] == 'Ridge':
@@ -282,8 +275,8 @@ class ModeloPrediccionLluvia:
                 modelo = ElasticNet(alpha=config['alpha'], l1_ratio=0.5)
             else:
                 raise ValueError("Tipo de regularización no válido")
-            modelo.fit(X_train, y_train)
-            y_pred = modelo.predict(X_test)
+            modelo.fit(x_train, y_train)
+            y_pred = modelo.predict(x_test)
             return y_test, y_pred
         except Exception as e:
             self.logger.error(f"Error en el entrenamiento de regresión regularizada: {str(e)}")
@@ -296,7 +289,7 @@ class ModeloPrediccionLluvia:
         """
         try:
             self.limpiar_datos()
-            #self.visualizar_datos()
+            # self.visualizar_datos()
             self.preprocesar_datos()
 
             modelos = [
