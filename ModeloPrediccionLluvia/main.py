@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import ElasticNet, Ridge, LinearRegression
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
 
 
 class ModeloPrediccionLluvia:
@@ -90,20 +91,30 @@ class ModeloPrediccionLluvia:
     def preprocesar_datos(self):
         pass
 
+
     def entrenar_regresion_lineal(self):
         # Selecciona las columnas de características y la variable objetivo
-        columnas_caracteristicas = ['Rainfall', 'Humidity3pm',  'Cloud3pm']
+        columnas_caracteristicas = ['Rainfall', 'Humidity3pm', 'Cloud3pm']
         variable_objetivo = 'RainfallTomorrow'
+
         # Divide los datos en conjuntos de entrenamiento y prueba
         X = self.data_clean[columnas_caracteristicas]
         y = self.data_clean[variable_objetivo]
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        # Imputa valores nulos en la variable objetivo (y_train) utilizando la media
+        imputer = SimpleImputer(strategy='mean')
+        y_train = imputer.fit_transform(y_train.values.reshape(-1, 1))
+
         # Crea un modelo de regresión lineal
         modelo = LinearRegression()
+
         # Entrena el modelo
         modelo.fit(X_train, y_train)
+
         # Realiza predicciones en el conjunto de prueba
         y_pred = modelo.predict(X_test)
+
         return y_test, y_pred
 
     def entrenar_regresion_regularizada(self, tipo_regularizacion, alpha=1.0):
@@ -139,6 +150,11 @@ class ModeloPrediccionLluvia:
         return y_test, y_pred
 
     def evaluar_modelo(self, y_true, y_pred):
+        # Imputa valores nulos en y_true y y_pred utilizando la media
+        imputer = SimpleImputer(strategy='mean')
+        y_true = y_true.values.reshape(-1, 1)
+        y_pred = y_pred.values.reshape(-1, 1)
+
         # Calcula métricas de rendimiento
         mse = mean_squared_error(y_true, y_pred)
         r2 = r2_score(y_true, y_pred)
