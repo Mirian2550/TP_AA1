@@ -18,16 +18,30 @@ class ModeloPrediccionLluvia:
     def limpiar_datos(self):
         ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
         datos_filtrados = self.data[self.data['Location'].isin(ciudades)]
+        datos_filtrados = datos_filtrados.drop('WindGustSpeed', axis=1)
 
         datos_filtrados.loc[:,  'MinTemp'] = datos_filtrados.groupby('Location')['MinTemp'].ffill()
         datos_filtrados.loc[:, 'MaxTemp'] = datos_filtrados.groupby('Location')['MaxTemp'].ffill()
         datos_filtrados.loc[:, 'Rainfall'] = datos_filtrados['Rainfall'].fillna(0)
         datos_filtrados.loc[:, 'Temp9am'] = datos_filtrados['Temp9am'].ffill()
-        datos_filtrados.loc[:, 'Temp3pm'] = datos_filtrados['Temp9am'].ffill()
+        datos_filtrados.loc[:, 'Temp3pm'] = datos_filtrados['Temp3pm'].ffill()
         datos_filtrados.loc[:, 'Humidity3pm'] = datos_filtrados['Humidity3pm'].ffill()
         datos_filtrados.loc[:, 'Cloud3pm'] = datos_filtrados['Cloud3pm'].ffill()
         datos_filtrados.loc[:, 'Evaporation'] = datos_filtrados['Evaporation'].ffill()
-        datos_filtrados.loc[:,'Sunshine'] = datos_filtrados.groupby('Location')['Sunshine'].ffill()
+        datos_filtrados.loc[:, 'Sunshine'] = datos_filtrados.groupby('Location')['Sunshine'].ffill()
+        datos_filtrados.loc[:, 'WindGustDir'] = datos_filtrados['WindGustDir'].fillna('sin datos')
+        datos_filtrados.loc[:, 'WindDir9am'] = datos_filtrados['WindDir9am'].fillna('sin datos')
+        datos_filtrados.loc[:, 'WindDir3pm'] = datos_filtrados['WindDir3pm'].fillna('sin datos')
+        datos_filtrados.loc[:, 'WindSpeed9am'] = datos_filtrados['WindSpeed9am'].ffill()
+        datos_filtrados.loc[:, 'WindSpeed3pm'] = datos_filtrados['WindSpeed3pm'].ffill()
+        datos_filtrados.loc[:, 'Humidity9am'] = datos_filtrados['Humidity9am'].ffill()
+        datos_filtrados.loc[:, 'Pressure9am'] = datos_filtrados['Pressure9am'].ffill()
+        datos_filtrados.loc[:, 'Pressure3pm'] = datos_filtrados['Pressure3pm'].ffill()
+        datos_filtrados.loc[:, 'Cloud9am'] = datos_filtrados['Cloud9am'].ffill()
+        datos_filtrados.loc[:, 'RainToday'] = datos_filtrados['RainToday'].fillna('sin datos')
+        datos_filtrados.loc[:, 'RainTomorrow'] = datos_filtrados['RainTomorrow'].ffill()
+
+
         # datos_filtrados[:,'WindGustDir'] = datos_filtrados['WindGustDir'].fillna('Desconocido', inplace=True)
         median_rainfall = datos_filtrados['RainfallTomorrow'].median()
         datos_filtrados.loc[:,'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall)
@@ -38,7 +52,6 @@ class ModeloPrediccionLluvia:
         else:
             print("Columnas con valores nulos en data_clean:")
             print(columnas_nulas)
-        print(datos_filtrados['RainfallTomorrow'])
 
         """
         datos_filtrados['Date'] = pd.to_datetime(datos_filtrados['Date'])
@@ -70,16 +83,54 @@ class ModeloPrediccionLluvia:
         """
     def visualizar_datos(self):
         columns_tmp = [ 'MinTemp', 'MaxTemp', 'Rainfall',
-       'Evaporation', 'Sunshine', 'WindGustSpeed', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
+       'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
        'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
        'Temp9am', 'Temp3pm',  'RainfallTomorrow']
-        """
-        for columna in self.data_clean.columns:
-            try:
-                self.data_clean[columna] = self.data_clean[columna].astype(float)
-            except ValueError:
-                print(f"Error en la columna {columna}")
-        """
+
+        rows = 4
+        cols = 4
+        fig, axes = plt.subplots(rows, cols, figsize=(8, 8))
+        fig.subplots_adjust(hspace=0.8, wspace=0.5)  # Ajustar espacio vertical y horizontal
+
+        # Iterar sobre las columnas y graficar en subplots
+        for i, column in enumerate(columns_tmp):
+            sns.histplot(self.data_clean[column], bins=30, edgecolor='black', ax=axes[i // cols, i % cols])
+            axes[i // cols, i % cols].set_title(f'Histograma de {column}')
+            axes[i // cols, i % cols].set_xlabel(column)
+            axes[i // cols, i % cols].set_ylabel('Frecuencia')
+
+        # Ajustar el diseño general
+        plt.tight_layout()
+        plt.show()
+
+        # Boxplots
+        fig, axes = plt.subplots(rows, cols, figsize=(8, 8))
+        fig.subplots_adjust(hspace=0.8, wspace=0.5)  
+
+        for i, column in enumerate(columns_tmp):
+            sns.boxplot(x=self.data_clean[column], ax=axes[i // cols, i % cols])
+            axes[i // cols, i % cols].set_title(f'Diagrama de Caja de {column}')
+            axes[i // cols, i % cols].set_xlabel(column)
+            axes[i // cols, i % cols].set_ylabel('Valor')
+
+        # Ajustar el diseño general
+        plt.tight_layout()
+        plt.show()
+
+        # Scatterplots
+        fig, axes = plt.subplots(rows, cols, figsize=(8, 8))
+        fig.subplots_adjust(hspace=0.8, wspace=0.5)  
+
+        for i, column in enumerate(columns_tmp):
+            sns.scatterplot(x=column, y='RainfallTomorrow', data=self.data_clean, ax=axes[i // cols, i % cols])
+            axes[i // cols, i % cols].set_title(f'Scatterplot entre {column} y RainfallTomorrow')
+            axes[i // cols, i % cols].set_xlabel(column)
+            axes[i // cols, i % cols].set_ylabel('RainfallTomorrow')
+
+        # Ajustar el diseño general
+        plt.tight_layout()
+        plt.show()
+
         matriz_correlacion = self.data_clean[columns_tmp].corr()
         plt.figure(figsize=(12, 8))
         sns.heatmap(matriz_correlacion, annot=True, cmap='coolwarm', linewidths=0.5)
@@ -87,15 +138,35 @@ class ModeloPrediccionLluvia:
         plt.show()
         conteo_clases = self.data_clean['RainTomorrow'].value_counts()
 
-        # Calcula el equilibrio
+        # Calcula el balance
         porcentaje_clase_positiva = (conteo_clases['Yes'] / len(self.data_clean)) * 100
         porcentaje_clase_negativa = (conteo_clases['No'] / len(self.data_clean)) * 100
 
         print(f'Porcentaje de clase "Yes" (Lloverá): {porcentaje_clase_positiva:.2f}%')
         print(f'Porcentaje de clase "No" (No lloverá): {porcentaje_clase_negativa:.2f}%')
-
+        """
+        No está balanceado:
+        Porcentaje de clase "Yes" (Lloverá): 22.98%
+        Porcentaje de clase "No" (No lloverá): 77.02%
+        """
     def preprocesar_datos(self):
-        pass
+        columns_tmp = ['MinTemp', 'MaxTemp',
+                   'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
+                   'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
+                   'Temp9am', 'Temp3pm']
+
+        for column in columns_tmp:
+            # Calcular el rango intercuartílico (IQR)
+            Q1 = self.data_clean[column].quantile(0.25)
+            Q3 = self.data_clean[column].quantile(0.75)
+            IQR = Q3 - Q1
+
+            # Definir los límites para identificar valores atípicos
+            lower_limit = Q1 - 1.5 * IQR
+            upper_limit = Q3 + 1.5 * IQR
+
+            # Reemplazar valores atípicos
+            self.data_clean.loc[(self.data_clean[column] < lower_limit) | (self.data_clean[column] > upper_limit), column] = self.data_clean[column].mean()
 
 
     def entrenar_regresion_lineal(self):
@@ -178,7 +249,10 @@ class ModeloPrediccionLluvia:
 
     def ejecutar_experimento(self):
         self.limpiar_datos()
-
+        self.visualizar_datos()
+        self.preprocesar_datos()
+        self.visualizar_datos()
+"""
         # Visualiza los datos
         # self.visualizar_datos()
 
@@ -209,4 +283,4 @@ class ModeloPrediccionLluvia:
         metricas = self.evaluar_modelo(y_true, y_pred)
         print("Métricas del modelo de regresión ElasticNet:")
         print(metricas)
-
+"""
