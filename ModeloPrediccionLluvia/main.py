@@ -18,7 +18,7 @@ class ModeloPrediccionLluvia:
     def limpiar_datos(self):
         ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
         datos_filtrados = self.data[self.data['Location'].isin(ciudades)]
-        # datos_filtrados.loc[:, 'Date'] = pd.to_datetime(datos_filtrados['Date'])
+
         datos_filtrados.loc[:,  'MinTemp'] = datos_filtrados.groupby('Location')['MinTemp'].ffill()
         datos_filtrados.loc[:, 'MaxTemp'] = datos_filtrados.groupby('Location')['MaxTemp'].ffill()
         datos_filtrados.loc[:, 'Rainfall'] = datos_filtrados['Rainfall'].fillna(0)
@@ -26,14 +26,20 @@ class ModeloPrediccionLluvia:
         datos_filtrados.loc[:, 'Temp3pm'] = datos_filtrados['Temp9am'].ffill()
         datos_filtrados.loc[:, 'Humidity3pm'] = datos_filtrados['Humidity3pm'].ffill()
         datos_filtrados.loc[:, 'Cloud3pm'] = datos_filtrados['Cloud3pm'].ffill()
-        umbral_z = 3
-        columnas_numericas = datos_filtrados.select_dtypes(include='number').columns
-        for columna in columnas_numericas:
-            z_scores = stats.zscore(datos_filtrados[columna])
-            valores_atipicos = (z_scores > umbral_z) | (z_scores < -umbral_z)
-            print(f"Valores atípicos en la columna {columna}:")
-            print(datos_filtrados[valores_atipicos])
+        datos_filtrados.loc[:, 'Evaporation'] = datos_filtrados['Evaporation'].ffill()
+        datos_filtrados.loc[:,'Sunshine'] = datos_filtrados.groupby('Location')['Sunshine'].ffill()
+        # datos_filtrados[:,'WindGustDir'] = datos_filtrados['WindGustDir'].fillna('Desconocido', inplace=True)
+        median_rainfall = datos_filtrados['RainfallTomorrow'].median()
+        datos_filtrados.loc[:,'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall)
         self.data_clean = datos_filtrados
+        columnas_nulas = self.data_clean.columns[self.data_clean.isnull().any()]
+        if columnas_nulas.empty:
+            print("No hay columnas con valores nulos en data_clean.")
+        else:
+            print("Columnas con valores nulos en data_clean:")
+            print(columnas_nulas)
+        print(datos_filtrados['RainfallTomorrow'])
+
         """
         datos_filtrados['Date'] = pd.to_datetime(datos_filtrados['Date'])
         datos_filtrados.sort_values(['Location', 'Date'], inplace=True)
@@ -119,9 +125,7 @@ class ModeloPrediccionLluvia:
 
     def entrenar_regresion_regularizada(self, tipo_regularizacion, alpha=1.0):
         # Selecciona las columnas de características y la variable objetivo
-        columnas_caracteristicas = ['MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation', 'Sunshine', 'WindGustSpeed',
-                                    'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am', 'Humidity3pm', 'Pressure9am',
-                                    'Pressure3pm', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm']
+        columnas_caracteristicas = ['Rainfall', 'Humidity3pm', 'Cloud3pm']
         variable_objetivo = 'RainfallTomorrow'
 
         # Divide los datos en conjuntos de entrenamiento y prueba
@@ -152,8 +156,10 @@ class ModeloPrediccionLluvia:
     def evaluar_modelo(self, y_true, y_pred):
         # Imputa valores nulos en y_true y y_pred utilizando la media
         imputer = SimpleImputer(strategy='mean')
-        y_true = y_true.values.reshape(-1, 1)
-        y_pred = y_pred.values.reshape(-1, 1)
+
+        # Asegura que y_true y y_pred sean arreglos 1D
+        y_true = y_true.reshape(-1)
+        y_pred = y_pred.reshape(-1)
 
         # Calcula métricas de rendimiento
         mse = mean_squared_error(y_true, y_pred)
@@ -174,7 +180,7 @@ class ModeloPrediccionLluvia:
         self.limpiar_datos()
 
         # Visualiza los datos
-        self.visualizar_datos()
+        # self.visualizar_datos()
 
         # Preprocesa los datos si es necesario
         self.preprocesar_datos()
