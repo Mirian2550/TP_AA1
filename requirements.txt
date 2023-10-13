@@ -4,3 +4,4 @@ tensorflow
 seaborn
 matplotlib
 numpy
+geopandas

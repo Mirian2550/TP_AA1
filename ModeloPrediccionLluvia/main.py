@@ -1,3 +1,4 @@
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -5,9 +6,10 @@ import seaborn as sns
 from sklearn.linear_model import ElasticNet, Ridge, LinearRegression
 from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_predict
 from sklearn.preprocessing import StandardScaler
 import logging
+import os
 
 
 def evaluar_modelo(y_true, y_pred):
@@ -147,7 +149,10 @@ class ModeloPrediccionLluvia:
             # Ajustar el diseño general
             plt.tight_layout()
             plt.show()
-
+            columns_tmp = ['MinTemp', 'MaxTemp', 'Rainfall',
+                           'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
+                           'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
+                           'Temp9am', 'Temp3pm', 'RainfallTomorrow', 'WindGustDir_numerico']
             matriz_correlacion = self.data_clean[columns_tmp].corr()
             plt.figure(figsize=(12, 8))
             sns.heatmap(matriz_correlacion, annot=True, cmap='coolwarm', linewidths=0.5)
@@ -161,6 +166,41 @@ class ModeloPrediccionLluvia:
 
             print(f'Porcentaje de clase "Yes" (Lloverá): {porcentaje_clase_positiva:.2f}%')
             print(f'Porcentaje de clase "No" (No lloverá): {porcentaje_clase_negativa:.2f}%')
+
+            # Coordenadas de las ciudades
+            ciudades_coordenadas = {
+                'Sydney': (-33.8688, 151.2093),
+                'SydneyAirport': (-33.9399, 151.1753),
+                'Canberra': (-35.2809, 149.1300),
+                'Melbourne': (-37.8136, 144.9631),
+                'MelbourneAirport': (-37.6730, 144.8430),
+            }
+
+            # Crear un DataFrame con las coordenadas
+            df_ciudades = pd.DataFrame(list(ciudades_coordenadas.values()), columns=['Latitud', 'Longitud'],
+                                       index=ciudades_coordenadas.keys())
+
+            # Crear un GeoDataFrame
+            gdf_ciudades = gpd.GeoDataFrame(df_ciudades, geometry=gpd.points_from_xy(df_ciudades['Longitud'],
+                                                                                     df_ciudades['Latitud']))
+
+            # Descargar un archivo de límites de países para Australia
+            world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+            australia = world[world['name'] == 'Australia']
+
+            # Crear el mapa
+            fig, ax = plt.subplots(figsize=(10, 8))
+            australia.plot(ax=ax, color='lightgrey')
+
+            # Plotear las ciudades
+            gdf_ciudades.plot(ax=ax, color='red', marker='o', markersize=100)
+
+            # Añadir etiquetas
+            for ciudad, (lat, lon) in ciudades_coordenadas.items():
+                ax.text(lon, lat, ciudad, fontsize=8)
+
+            # Mostrar el mapa
+            plt.show()
         except Exception as e:
             self.logger.error(f"Error en la visualización de datos: {str(e)}")
             raise ValueError(f"Error en la visualización de datos: {str(e)}")
@@ -174,18 +214,36 @@ class ModeloPrediccionLluvia:
         Humidity que no supere 100.0
         """
         try:
-            self.data_clean = self.data_clean.drop('Unnamed: 0', axis=1)
+            categorias_unicas = self.data_clean['WindGustDir'].unique()
 
-            columns_to_round = ['MinTemp',
-                                'MaxTemp',
-                                'Evaporation',
-                                'Sunshine',
-                                'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
-                                'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
-                                'Temp9am', 'Temp3pm']
+            # Crea un diccionario de mapeo de categorías a valores numéricos
+            mapeo = {categoria: indice + 1 for indice, categoria in enumerate(categorias_unicas)}
+
+            # Agrega una entrada para 'sin clasificar' con valor 0
+            mapeo['sin datos'] = 0
+
+            # Aplica el mapeo para reemplazar las categorías por valores numéricos
+            self.data_clean['WindGustDir_numerico'] = self.data_clean['WindGustDir'].map(mapeo)
+
+            self.data_clean = self.data_clean.drop('Unnamed: 0', axis=1)
+            columns_to_round = [
+                'MinTemp',
+                'MaxTemp',
+                'Evaporation',
+                'Sunshine',
+                'WindSpeed9am',
+                'WindSpeed3pm',
+                'Humidity9am',
+                'Humidity3pm',
+                'Pressure9am',
+                'Pressure3pm',
+                'Cloud9am',
+                'Cloud3pm',
+                'Temp9am',
+                'Temp3pm'
+            ]
             columns_negative_to_0 = ['Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Cloud9am', 'Cloud3pm']
             columns_to_cap = ['Humidity9am', 'Humidity3pm']
-
             for column in columns_to_round:
                 if column in self.data_clean.columns:
                     self.data_clean[column] = self.data_clean[column].round(1)
@@ -194,7 +252,6 @@ class ModeloPrediccionLluvia:
                 if column in self.data_clean.columns:
                     self.data_clean[column] = self.data_clean[column].clip(lower=0)
 
-            # Asegurarse de que la Humedad no supere el 100.0
             for column in columns_to_cap:
                 if column in self.data_clean.columns:
                     self.data_clean[column] = self.data_clean[column].clip(upper=100)
@@ -227,7 +284,7 @@ class ModeloPrediccionLluvia:
             tuple: Un par de arrays, y_true y y_pred, que contienen los valores reales y predichos, respectivamente.
         """
         try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm', 'Cloud3pm']
+            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
             variable_objetivo = 'RainfallTomorrow'
             x = self.data_clean[columnas_caracteristicas]
             y = self.data_clean[variable_objetivo]
@@ -251,6 +308,32 @@ class ModeloPrediccionLluvia:
             self.logger.error(f"Error en el entrenamiento de regresión lineal: {str(e)}")
             raise ValueError(f"Error en el entrenamiento de regresión lineal: {str(e)}")
 
+    def entrenar_regresion_lineal_con_validacion_cruzada(self, normalize=True, k=5):
+        try:
+            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
+            variable_objetivo = 'RainfallTomorrow'
+            x = self.data_clean[columnas_caracteristicas]
+            y = self.data_clean[variable_objetivo]
+            modelo = LinearRegression()
+            if normalize:
+                scaler = StandardScaler()
+                x = scaler.fit_transform(x)
+
+            # Realiza la validación cruzada k-fold y obtén predicciones
+            y_pred = cross_val_predict(modelo, x, y, cv=k)
+
+            # Calcula el error cuadrático medio (MSE) promedio
+            mse_promedio = mean_squared_error(y, y_pred)
+
+            if normalize:
+                # Si las características se normalizaron, podemos inspeccionar los coeficientes
+                modelo.fit(x, y)
+            return y, y_pred
+
+        except Exception as e:
+            self.logger.error(f"Error en el entrenamiento de regresión lineal con validación cruzada: {str(e)}")
+            raise ValueError(f"Error en el entrenamiento de regresión lineal con validación cruzada: {str(e)}")
+
     def entrenar_regresion_regularizada(self, config: dict):
         """
         Entrena un modelo de regresión regularizada (Lasso, Ridge, ElasticNet) utilizando los datos preprocesados.
@@ -262,7 +345,7 @@ class ModeloPrediccionLluvia:
         de prueba.
         """
         try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm', 'Cloud3pm']
+            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
             variable_objetivo = 'RainfallTomorrow'
             x = self.data_clean[columnas_caracteristicas]
             y = self.data_clean[variable_objetivo]
@@ -282,6 +365,33 @@ class ModeloPrediccionLluvia:
             self.logger.error(f"Error en el entrenamiento de regresión regularizada: {str(e)}")
             raise ValueError(f"Error en el entrenamiento de regresión regularizada: {str(e)}")
 
+    def guardar_csv(self):
+        """
+        Guarda el DataFrame limpio en un archivo CSV en la carpeta "data".
+
+        Este método asegura que la carpeta "data" exista o la crea si no existe. Luego, guarda el DataFrame limpio en un archivo CSV sin incluir el índice. Si el archivo ya existe, lo reemplaza.
+
+        :return: None
+        """
+        try:
+            # Verificar si el archivo ya existe y eliminarlo si es así
+            ruta_csv = os.path.join("data", 'weatherAUS_clean.csv')
+            if os.path.exists(ruta_csv):
+                os.remove(ruta_csv)
+
+            # Asegurarse de que la carpeta "data" exista, o crearla si no existe
+            if not os.path.exists("data"):
+                os.makedirs("data")
+
+            # Definir la ruta completa del archivo CSV
+            ruta_csv = os.path.join("data", 'weatherAUS_clean.csv')
+
+            # Guardar el DataFrame limpio en el archivo CSV sin incluir el índice
+            self.data_clean.to_csv(ruta_csv, index=False)
+        except Exception as e:
+            # Manejo de excepciones en caso de error
+            print(f"Error al guardar el archivo CSV: {str(e)}")
+
     def ejecutar_experimento(self):
         """
         Ejecuta un experimento completo que incluye la limpieza de datos, visualización, preprocesamiento y
@@ -291,7 +401,7 @@ class ModeloPrediccionLluvia:
             self.limpiar_datos()
             # self.visualizar_datos()
             self.preprocesar_datos()
-
+            self.visualizar_datos()
             modelos = [
                 ("Regresión Lineal", self.entrenar_regresion_lineal, {"normalize": True}),
                 ("Regresión Lasso", self.entrenar_regresion_regularizada,
@@ -302,6 +412,7 @@ class ModeloPrediccionLluvia:
                     "tipo_regularizacion": "ElasticNet",
                     "alpha": 0.01
                 }),
+                ("Regresión Validacion Cruzada", self.entrenar_regresion_lineal_con_validacion_cruzada)
             ]
 
             for nombre_modelo, funcion_entrenamiento, *configuracion in modelos:
@@ -312,6 +423,10 @@ class ModeloPrediccionLluvia:
                 metricas = evaluar_modelo(y_true, y_pred)
                 print(f"Métricas del modelo {nombre_modelo}:")
                 print(metricas)
+            self.guardar_csv()
+
+            resultados = self.entrenar_regresion_lineal_con_validacion_cruzada()
+            print(resultados)
 
         except Exception as e:
             self.logger.error(f"Error en la ejecución del experimento: {str(e)}")
