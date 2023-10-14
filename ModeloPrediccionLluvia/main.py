@@ -336,6 +336,7 @@ class ModeloPrediccionLluvia:
 
     def entrenar_regresion_regularizada(self, config: dict):
         """
+
         Entrena un modelo de regresión regularizada (Lasso, Ridge, ElasticNet) utilizando los datos preprocesados.
         Args:
             config (dict): Un diccionario que contiene la configuración del modelo de regresión regularizada,
@@ -369,7 +370,8 @@ class ModeloPrediccionLluvia:
         """
         Guarda el DataFrame limpio en un archivo CSV en la carpeta "data".
 
-        Este método asegura que la carpeta "data" exista o la crea si no existe. Luego, guarda el DataFrame limpio en un archivo CSV sin incluir el índice. Si el archivo ya existe, lo reemplaza.
+        Este método asegura que la carpeta "data" exista o la crea si no existe. Luego, guarda el DataFrame limpio en
+        un archivo CSV sin incluir el índice. Si el archivo ya existe, lo reemplaza.
 
         :return: None
         """
