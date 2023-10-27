@@ -5,14 +5,33 @@ import pandas as pd
 import seaborn as sns
 from sklearn.linear_model import ElasticNet, Ridge, LinearRegression
 from sklearn.linear_model import Lasso
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, precision_score, recall_score, f1_score, \
+    roc_auc_score, confusion_matrix
 from sklearn.model_selection import train_test_split, cross_val_predict
+from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 import logging
 import os
 
 
-def evaluar_modelo(y_true, y_pred):
+def evaluar_regresion_logistica(y_test, y_pred):
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred)
+
+    # Mostrar las métricas
+    print(f'Accuracy: {accuracy:.2f}')
+    print(f'Precision: {precision:.2f}')
+    print(f'Recall: {recall:.2f}')
+    print(f'F1 Score: {f1:.2f}')
+    print(f'ROC-AUC: {roc_auc:.2f}')
+
+    print("Matiz de confusión:")
+    print(pd.DataFrame(confusion_matrix(y_test,y_pred), columns=["pred: No", "Pred: Si"], index=["Real: No", "Real: si"]))
+
+def evaluar_regresion_lineal(y_true, y_pred):
     """
     Evalúa un modelo de regresión y calcula diversas métricas.
 
@@ -54,6 +73,24 @@ class ModeloPrediccionLluvia:
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
 
+    def regresion_logistica(self):
+        """
+        Entrena un modelo de regresión logística utilizando los datos preprocesados.
+        """
+        try:
+            x = self.data_clean.drop(['RainTomorrow', 'Date', 'Location', 'WindDir9am', 'WindDir3pm', 'WindGustDir'],
+                                     axis=1)
+            y = self.data_clean['RainTomorrow']
+            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+            modelo = LogisticRegression(max_iter=10000)
+            modelo.fit(x_train, y_train)
+            y_pred = modelo.predict(x_test)
+
+            return y_test, y_pred
+        except Exception as e:
+            self.logger.error(f"Error en el entrenamiento de regresión logística: {str(e)}")
+            raise ValueError(f"Error en el entrenamiento de regresión logística: {str(e)}")
+
     def limpiar_datos(self):
         """
         Limpia los datos cargados desde el archivo CSV y prepara los datos limpios para su uso.
@@ -81,18 +118,27 @@ class ModeloPrediccionLluvia:
             datos_filtrados.loc[:, 'Pressure9am'] = datos_filtrados['Pressure9am'].ffill()
             datos_filtrados.loc[:, 'Pressure3pm'] = datos_filtrados['Pressure3pm'].ffill()
             datos_filtrados.loc[:, 'Cloud9am'] = datos_filtrados['Cloud9am'].ffill()
-            datos_filtrados.loc[:, 'RainToday'] = datos_filtrados['RainToday'].fillna('sin datos')
+            datos_filtrados.loc[:, 'RainToday'] = datos_filtrados['RainToday'].fillna('No')
             datos_filtrados.loc[:, 'RainTomorrow'] = datos_filtrados['RainTomorrow'].ffill()
 
             median_rainfall = datos_filtrados['RainfallTomorrow'].median()
             datos_filtrados.loc[:, 'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall)
             self.data_clean = datos_filtrados
             columnas_nulas = self.data_clean.columns[self.data_clean.isnull().any()]
+
+            data_rain_tomorrow = pd.get_dummies(self.data_clean["RainTomorrow"], drop_first=True)
+            data_rain_tomorrow = data_rain_tomorrow.astype(int)
+            self.data_clean["RainTomorrow"] = data_rain_tomorrow
+            data_rain_today = pd.get_dummies(self.data_clean["RainToday"], drop_first=True)
+
+            data_rain_today = data_rain_today.astype(int)
+            self.data_clean["RainToday"] = data_rain_today
+
             if columnas_nulas.empty:
                 print("No hay columnas con valores nulos en data_clean.")
             else:
                 print("Columnas con valores nulos en data_clean:")
-                print(columnas_nulas)
+
         except Exception as e:
             self.logger.error(f"Error en la limpieza de datos: {str(e)}")
             raise ValueError(f"Error en la limpieza de datos: {str(e)}")
@@ -105,10 +151,9 @@ class ModeloPrediccionLluvia:
             columns_tmp = ['MinTemp', 'MaxTemp', 'Rainfall',
                            'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
                            'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
-                           'Temp9am', 'Temp3pm', 'RainfallTomorrow']
-
-            rows = 4
-            cols = 4
+                           'Temp9am', 'Temp3pm', 'RainfallTomorrow', 'RainToday']
+            rows = 5
+            cols = 5
             fig, axes = plt.subplots(rows, cols, figsize=(8, 8))
             fig.subplots_adjust(hspace=0.8, wspace=0.5)  # Ajustar espacio vertical y horizontal
             # Iterar sobre las columnas y graficar en subplots
@@ -152,17 +197,16 @@ class ModeloPrediccionLluvia:
             columns_tmp = ['MinTemp', 'MaxTemp', 'Rainfall',
                            'Evaporation', 'Sunshine', 'WindSpeed9am', 'WindSpeed3pm', 'Humidity9am',
                            'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am', 'Cloud3pm',
-                           'Temp9am', 'Temp3pm', 'RainfallTomorrow', 'WindGustDir_numerico']
+                           'Temp9am', 'Temp3pm', 'RainfallTomorrow', 'WindGustDir_numerico', 'RainToday']
             matriz_correlacion = self.data_clean[columns_tmp].corr()
             plt.figure(figsize=(12, 8))
             sns.heatmap(matriz_correlacion, annot=True, cmap='coolwarm', linewidths=0.5)
             plt.title('Matriz de Correlación (sin Date)')
             plt.show()
             conteo_clases = self.data_clean['RainTomorrow'].value_counts()
-
             # Calcula el balance
-            porcentaje_clase_positiva = (conteo_clases['Yes'] / len(self.data_clean)) * 100
-            porcentaje_clase_negativa = (conteo_clases['No'] / len(self.data_clean)) * 100
+            porcentaje_clase_positiva = (conteo_clases[1] / len(self.data_clean)) * 100
+            porcentaje_clase_negativa = (conteo_clases[0] / len(self.data_clean)) * 100
 
             print(f'Porcentaje de clase "Yes" (Lloverá): {porcentaje_clase_positiva:.2f}%')
             print(f'Porcentaje de clase "No" (No lloverá): {porcentaje_clase_negativa:.2f}%')
@@ -394,7 +438,7 @@ class ModeloPrediccionLluvia:
             # Manejo de excepciones en caso de error
             print(f"Error al guardar el archivo CSV: {str(e)}")
 
-    def ejecutar_experimento(self):
+    def regresiones_lineales(self):
         """
         Ejecuta un experimento completo que incluye la limpieza de datos, visualización, preprocesamiento y
         entrenamiento de modelos.
@@ -403,7 +447,8 @@ class ModeloPrediccionLluvia:
             self.limpiar_datos()
             # self.visualizar_datos()
             self.preprocesar_datos()
-            self.visualizar_datos()
+            # self.visualizar_datos()
+
             modelos = [
                 ("Regresión Lineal", self.entrenar_regresion_lineal, {"normalize": True}),
                 ("Regresión Lasso", self.entrenar_regresion_regularizada,
@@ -422,11 +467,10 @@ class ModeloPrediccionLluvia:
                     y_true, y_pred = funcion_entrenamiento(*configuracion)
                 else:
                     y_true, y_pred = funcion_entrenamiento()
-                metricas = evaluar_modelo(y_true, y_pred)
+                metricas = evaluar_regresion_lineal(y_true, y_pred)
                 print(f"Métricas del modelo {nombre_modelo}:")
                 print(metricas)
             self.guardar_csv()
-
             resultados = self.entrenar_regresion_lineal_con_validacion_cruzada()
             print(resultados)
 
