@@ -29,7 +29,10 @@ def evaluar_regresion_logistica(y_test, y_pred):
     print(f'ROC-AUC: {roc_auc:.2f}')
 
     print("Matiz de confusión:")
-    print(pd.DataFrame(confusion_matrix(y_test,y_pred), columns=["pred: No", "Pred: Si"], index=["Real: No", "Real: si"]))
+    print(pd.DataFrame(confusion_matrix(y_test, y_pred),
+                       columns=["pred: No", "Pred: Si"],
+                       index=["Real: No", "Real: si"]))
+
 
 def evaluar_regresion_lineal(y_true, y_pred):
     """
