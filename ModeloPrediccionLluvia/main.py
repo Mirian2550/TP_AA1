@@ -6,7 +6,7 @@ import seaborn as sns
 from sklearn.linear_model import ElasticNet, Ridge, LinearRegression
 from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_squared_error, r2_score, accuracy_score, precision_score, recall_score, f1_score, \
-    roc_auc_score, confusion_matrix
+    roc_auc_score, confusion_matrix, roc_curve
 from sklearn.model_selection import train_test_split, cross_val_predict
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
@@ -21,18 +21,33 @@ def evaluar_regresion_logistica(y_test, y_pred):
     f1 = f1_score(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred)
 
-    # Mostrar las métricas
+    #Métricas
     print(f'Accuracy: {accuracy:.2f}')
     print(f'Precision: {precision:.2f}')
     print(f'Recall: {recall:.2f}')
     print(f'F1 Score: {f1:.2f}')
     print(f'ROC-AUC: {roc_auc:.2f}')
 
+    #Matriz de confusión
     print("Matiz de confusión:")
     print(pd.DataFrame(confusion_matrix(y_test, y_pred),
                        columns=["pred: No", "Pred: Si"],
                        index=["Real: No", "Real: si"]))
-
+    
+    # Calculo la ROC y el AUC
+    fpr, tpr, thresholds = roc_curve(y_test, y_pred)
+    roc_auc = roc_auc_score(y_test, y_pred)
+    # Grafico la curva ROC
+    plt.figure(figsize=(8, 6))
+    plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
+    plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('Tasa de Falsos Positivos (FPR)')
+    plt.ylabel('Tasa de Verdaderos Positivos (TPR)')
+    plt.title('Curva ROC')
+    plt.legend(loc='lower right')
+    plt.show()
 
 def evaluar_regresion_lineal(y_true, y_pred):
     """
