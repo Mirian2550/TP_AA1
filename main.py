@@ -1,6 +1,8 @@
 from ModeloPrediccionLluvia.main import ModeloPrediccionLluvia, evaluar_regresion_logistica
 from ModeloBase.regression import RegresionModelBase
 from ModeloBase.clasification import ClasificationModelBase
+from NeuralNetwork.classification_neural import ClassificationNeuralNetwork
+from NeuralNetwork.regression_neural import RegressionNeuralNetwork
 
 archivo_datos = 'data/weatherAUS.csv'
 modelo = ModeloPrediccionLluvia(archivo_datos)
@@ -16,3 +18,11 @@ modelo_regresion.regresion()
 print('Modelo de clasificacion ')
 modelo_clasificacion = ClasificationModelBase(modelo.data_clean)
 modelo_clasificacion.clasificacion()
+
+print('clasificacion con redes neuronales')
+classification_nn_model = ClassificationNeuralNetwork(modelo.data_clean)
+trained_model = classification_nn_model.classification()
+print('regresion con redes neuronales')
+regression_nn_model = RegressionNeuralNetwork(modelo.data_clean)
+regression_nn_model.regression()
+
