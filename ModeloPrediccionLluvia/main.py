@@ -339,73 +339,55 @@ class ModeloPrediccionLluvia:
     def entrenar_regresion_lineal(self, normalize=True):
         """
         Entrena un modelo de regresión lineal utilizando los datos preprocesados.
+
         Args:
             normalize (bool, optional): Indica si se deben normalizar las características. Por defecto, True.
 
         Returns:
-            tuple: Un par de arrays, y_true y y_pred, que contienen los valores reales y predichos, respectivamente.
+            tuple: Un tuple que contiene el conjunto de prueba (x_test, y_test), las predicciones (y_pred) y el modelo entrenado.
         """
         try:
             columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
             variable_objetivo = 'RainfallTomorrow'
             x = self.data_clean[columnas_caracteristicas]
             y = self.data_clean[variable_objetivo]
-
+            # Dividir los datos en conjuntos de entrenamiento y prueba
+            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
             modelo = LinearRegression()
             if normalize:
+                # Normalizar características
                 scaler = StandardScaler()
-                x = scaler.fit_transform(x)
-
-            # Entrena el modelo en todos los datos
-            modelo.fit(x, y)
+                x_train = scaler.fit_transform(x_train)
+                x_test = scaler.transform(x_test)
+            # Entrenar el modelo en el conjunto de entrenamiento
+            modelo.fit(x_train, y_train)
             if normalize:
                 # Si las características se normalizaron, podemos inspeccionar los coeficientes
                 coeficientes = modelo.coef_
                 print("Coeficientes de características normalizadas:")
                 for caracteristica, coef in zip(columnas_caracteristicas, coeficientes):
                     print(f"{caracteristica}: {coef}")
-            y_pred = modelo.predict(x)
-            return y, y_pred
-        except Exception as e:
-            self.logger.error(f"Error en el entrenamiento de regresión lineal: {str(e)}")
-            raise ValueError(f"Error en el entrenamiento de regresión lineal: {str(e)}")
-
-    def entrenar_regresion_lineal_con_validacion_cruzada(self, normalize=True, k=5):
-        try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
-            variable_objetivo = 'RainfallTomorrow'
-            x = self.data_clean[columnas_caracteristicas]
-            y = self.data_clean[variable_objetivo]
-            modelo = LinearRegression()
-            if normalize:
-                scaler = StandardScaler()
-                x = scaler.fit_transform(x)
-
-            # Realiza la validación cruzada k-fold y obtén predicciones
-            y_pred = cross_val_predict(modelo, x, y, cv=k)
-
-            # Calcula el error cuadrático medio (MSE) promedio
-            mse_promedio = mean_squared_error(y, y_pred)
-
-            if normalize:
-                # Si las características se normalizaron, podemos inspeccionar los coeficientes
-                modelo.fit(x, y)
-            return y, y_pred
+            # Predecir en el conjunto de prueba
+            y_pred = modelo.predict(x_test)
+            # Devolver el conjunto de prueba, las predicciones y el modelo entrenado
+            return x_test, y_test, y_pred, modelo
 
         except Exception as e:
-            self.logger.error(f"Error en el entrenamiento de regresión lineal con validación cruzada: {str(e)}")
-            raise ValueError(f"Error en el entrenamiento de regresión lineal con validación cruzada: {str(e)}")
+            print(f"Error en la función entrenar_regresion_lineal: {str(e)}")
+            # Manejar el error según sea necesario
+            return None
+
 
     def entrenar_regresion_regularizada(self, config: dict):
         """
-
         Entrena un modelo de regresión regularizada (Lasso, Ridge, ElasticNet) utilizando los datos preprocesados.
         Args:
             config (dict): Un diccionario que contiene la configuración del modelo de regresión regularizada,
                 incluyendo el tipo de regularización (tipo_regularizacion) y el valor de alpha.
 
-        Returns: tuple: Un par de arrays, y_test y y_pred, que contienen los valores reales y predichos en el conjunto
-        de prueba.
+        Returns:
+            Tuple: Un par de arrays, y_test y y_pred, que contienen los valores reales y predichos en el conjunto
+            de prueba, y el modelo entrenado.
         """
         try:
             columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
@@ -413,6 +395,7 @@ class ModeloPrediccionLluvia:
             x = self.data_clean[columnas_caracteristicas]
             y = self.data_clean[variable_objetivo]
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+
             if config['tipo_regularizacion'] == 'Lasso':
                 modelo = Lasso(alpha=config['alpha'])
             elif config['tipo_regularizacion'] == 'Ridge':
@@ -421,9 +404,11 @@ class ModeloPrediccionLluvia:
                 modelo = ElasticNet(alpha=config['alpha'], l1_ratio=0.5)
             else:
                 raise ValueError("Tipo de regularización no válido")
+
             modelo.fit(x_train, y_train)
             y_pred = modelo.predict(x_test)
-            return y_test, y_pred
+            return x_test, y_test, y_pred, modelo
+
         except Exception as e:
             self.logger.error(f"Error en el entrenamiento de regresión regularizada: {str(e)}")
             raise ValueError(f"Error en el entrenamiento de regresión regularizada: {str(e)}")
@@ -461,6 +446,8 @@ class ModeloPrediccionLluvia:
         Ejecuta un experimento completo que incluye la limpieza de datos, visualización, preprocesamiento y
         entrenamiento de modelos.
         """
+        resultados_modelos = []
+
         try:
             self.limpiar_datos()
             # self.visualizar_datos()
@@ -476,22 +463,33 @@ class ModeloPrediccionLluvia:
                 ("Regresión ElasticNet", self.entrenar_regresion_regularizada, {
                     "tipo_regularizacion": "ElasticNet",
                     "alpha": 0.01
-                }),
-                ("Regresión Validacion Cruzada", self.entrenar_regresion_lineal_con_validacion_cruzada)
+                })
             ]
-
             for nombre_modelo, funcion_entrenamiento, *configuracion in modelos:
-                if len(configuracion) > 0:
-                    y_true, y_pred = funcion_entrenamiento(*configuracion)
-                else:
-                    y_true, y_pred = funcion_entrenamiento()
-                metricas = evaluar_regresion_lineal(y_true, y_pred)
-                print(f"Métricas del modelo {nombre_modelo}:")
-                print(metricas)
+                try:
+                    if len(configuracion) > 0:
+                        x_test, y_test, y_pred, modelo = funcion_entrenamiento(*configuracion)
+                    else:
+                        x_test, y_test, y_pred, modelo = funcion_entrenamiento()
+                    metricas = evaluar_regresion_lineal(y_test, y_pred)
+                    print(f"Métricas del modelo {nombre_modelo}:")
+                    print(metricas)
+                    print(x_test)
+                    resultados_modelos.append(
+                        {
+                            'nombre':nombre_modelo,
+                            'modelo': modelo,
+                            'x_test':x_test
+                        }
+                    )
+                except ValueError as ve:
+                    print(f"Error en el modelo {nombre_modelo}: {str(ve)}")
             self.guardar_csv()
-            resultados = self.entrenar_regresion_lineal_con_validacion_cruzada()
-            print(resultados)
 
         except Exception as e:
             self.logger.error(f"Error en la ejecución del experimento: {str(e)}")
             raise ValueError(f"Error en la ejecución del experimento: {str(e)}")
+
+        return resultados_modelos
+
+

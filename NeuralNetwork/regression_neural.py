@@ -2,7 +2,7 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import optuna
-import shap
+import shap_analyzer
 import numpy as np
 
 
@@ -67,16 +67,16 @@ class RegressionNeuralNetwork:
         X_instance_normalized = np.reshape(X_instance_normalized, (1, -1))
 
         # Crear un masker independiente
-        masker = shap.maskers.Independent(data=self.X_train_normalized)
+        masker = shap_analyzer.maskers.Independent(data=self.X_train_normalized)
 
         # Crear un explainer SHAP con el modelo entrenado y el masker
-        explainer = shap.Explainer(self.model, masker)
+        explainer = shap_analyzer.Explainer(self.model, masker)
 
         # Calcular los valores Shapley para la instancia dada
         shap_values = explainer(X_instance_normalized)
 
         # Visualizar los valores Shapley
-        shap.summary_plot(shap_values, X_instance_normalized, feature_names=self.features)
+        shap_analyzer.summary_plot(shap_values, X_instance_normalized, feature_names=self.features)
 
     def regression_with_shap(self):
         X = self.data[self.features]
