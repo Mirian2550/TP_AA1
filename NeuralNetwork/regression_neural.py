@@ -3,6 +3,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import optuna
 import shap
+import numpy as np
 
 
 class RegressionNeuralNetwork:
@@ -23,7 +24,6 @@ class RegressionNeuralNetwork:
             ])
             optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
             model.compile(optimizer=optimizer, loss='mean_squared_error')
-
             X_train, X_val, y_train, y_val = train_test_split(
                 self.data[self.features], self.data['Rainfall'], test_size=0.2, random_state=42
             )
@@ -63,6 +63,9 @@ class RegressionNeuralNetwork:
         # Normalizar la instancia de entrada
         X_instance_normalized = (X_instance - self.X_mean) / self.X_std
 
+        # Asegurarse de que X_instance_normalized sea un array de una sola fila
+        X_instance_normalized = np.reshape(X_instance_normalized, (1, -1))
+
         # Crear un masker independiente
         masker = shap.maskers.Independent(data=self.X_train_normalized)
 
@@ -70,7 +73,7 @@ class RegressionNeuralNetwork:
         explainer = shap.Explainer(self.model, masker)
 
         # Calcular los valores Shapley para la instancia dada
-        shap_values = explainer.shap_values(X_instance_normalized)
+        shap_values = explainer(X_instance_normalized)
 
         # Visualizar los valores Shapley
         shap.summary_plot(shap_values, X_instance_normalized, feature_names=self.features)
@@ -78,6 +81,10 @@ class RegressionNeuralNetwork:
     def regression_with_shap(self):
         X = self.data[self.features]
         y = self.data['Rainfall']
+
+        # Asegurarse de que los datos no contengan valores None y tengan la forma correcta
+        if X is None or y is None or X.shape[0] == 0 or y.shape[0] == 0:
+            raise ValueError("Invalid data. Please check your input data.")
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
@@ -89,15 +96,13 @@ class RegressionNeuralNetwork:
         # Entrenar el modelo con todo el conjunto de entrenamiento
         self.model.fit(self.X_train_normalized, y_train, epochs=10, batch_size=32, verbose=1)
 
-        # Calcular los valores Shapley para una instancia de prueba
-        instance_to_explain = X_test.iloc[0]
-        self.explain_predictions(instance_to_explain)
+        # Iterar sobre todas las instancias de prueba para explicar cada una
+        for i in range(X_test_normalized.shape[0]):
+            instance_to_explain = X_test_normalized.iloc[i]
+            self.explain_predictions(instance_to_explain)
 
         # Realizar predicciones en el conjunto de prueba
         predictions = self.model.predict(X_test_normalized).flatten()
         mse = mean_squared_error(y_test, predictions)
         print(f"Error Cuadrático Medio en el conjunto de prueba: {mse}")
-
-
-
 
