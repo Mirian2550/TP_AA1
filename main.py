@@ -9,20 +9,20 @@ modelo = ModeloPrediccionLluvia(archivo_datos)
 resultados = modelo.regresiones_lineales()
 y_test, y_pred = modelo.regresion_logistica()
 evaluar_regresion_logistica(y_test=y_test, y_pred=y_pred)
-# modelos base de regresion
-# this is model base of regression
 
-print('Modelo Base de Regresion')
+print('====================Modelo Base de Regresion=================')
 modelo_regresion = RegresionModelBase(modelo.data_clean)
 modelo_regresion.regresion()
-print('Modelo de clasificacion ')
+"""
+print('=============================Modelo de clasificacion=========================================================')
 modelo_clasificacion = ClasificationModelBase(modelo.data_clean)
 modelo_clasificacion.clasificacion()
-
-print('clasificacion con redes neuronales')
+print('=============================clasificacion con redes neuronales================================================')
 classification_nn_model = ClassificationNeuralNetwork(modelo.data_clean)
 trained_model = classification_nn_model.classification()
-print('regresion con redes neuronales')
+"""
+print('=============================regresion con redes neuronales====================================================')
 regression_nn_model = RegressionNeuralNetwork(modelo.data_clean)
-regression_nn_model.regression()
+# regression_nn_model.regression()
+regression_nn_model.regression_with_shap()
 
