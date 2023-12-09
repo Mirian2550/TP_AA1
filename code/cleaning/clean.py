@@ -138,12 +138,6 @@ class Clean:
 
             data_rain_today = data_rain_today.astype(int)
             self.data_clean["RainToday"] = data_rain_today
-            print(self.data_clean.columns)
-            if columnas_nulas.empty:
-                print("No hay columnas con valores nulos en data_clean.")
-            else:
-                print("Columnas con valores nulos en data_clean:")
-
 
         except Exception as e:
             self.logger.error(f"Error en la limpieza de datos: {str(e)}")
