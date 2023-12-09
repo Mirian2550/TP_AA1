@@ -63,7 +63,15 @@ class RegressionLineal:
             tuple: Una tupla que contiene x_test, y_test, y_pred y el modelo entrenado.
         """
         try:
-            features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindDir9am', 'WindDir3pm', 'WindGustDir']
+            """
+            'Date', 'Location', 'MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation',
+       'Sunshine', 'WindGustDir', 'WindSpeed9am', 'WindSpeed3pm',
+       'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am',
+       'Cloud3pm', 'Temp9am', 'Temp3pm', 'RainToday', 'RainTomorrow',
+       'RainfallTomorrow'
+            """
+            features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindGustDir']
+            #features_to_exclude = [ ]
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
@@ -78,7 +86,7 @@ class RegressionLineal:
     def optimize_hyperparameters_logistic(self, param_grid, cv=5, n_iter=10):
         try:
             # Excluir columnas no deseadas
-            features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindDir9am', 'WindDir3pm', 'WindGustDir']
+            features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindGustDir']
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
 
@@ -113,12 +121,15 @@ class RegressionLineal:
 
     def classic(self, normalize=True):
         try:
-            columnas_caracteristicas = ['MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation',
-       'Sunshine', 'WindGustDir', 'WindSpeed9am',
-       'WindSpeed3pm', 'Humidity9am', 'Humidity3pm', 'Pressure9am',
-       'Pressure3pm', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm',
-       'RainToday']
-            #columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
+            columnas_caracteristicas = ['Rainfall',
+                                        'Humidity3pm',
+                                        'MinTemp',
+                                        'MaxTemp',
+                                        'Evaporation',
+                                        'Humidity9am', 'Temp9am', 'Temp3pm',
+                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
+                                        'Pressure9am', 'Pressure3pm'
+            ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -148,7 +159,15 @@ class RegressionLineal:
 
     def gradient_descent(self, learning_rate=0.01, num_iterations=1000):
         try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
+            columnas_caracteristicas = ['Rainfall',
+                                        'Humidity3pm',
+                                        'MinTemp',
+                                        'MaxTemp',
+                                        'Evaporation',
+                                        'Humidity9am', 'Temp9am', 'Temp3pm',
+                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
+                                        'Pressure9am', 'Pressure3pm'
+                                        ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -178,7 +197,15 @@ class RegressionLineal:
 
     def gradient_descent_optimize_hyperparameters(self, param_grid, cv=5, n_iter=10):
         try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
+            columnas_caracteristicas = ['Rainfall',
+                                        'Humidity3pm',
+                                        'MinTemp',
+                                        'MaxTemp',
+                                        'Evaporation',
+                                        'Humidity9am', 'Temp9am', 'Temp3pm',
+                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
+                                        'Pressure9am', 'Pressure3pm'
+                                        ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -214,7 +241,15 @@ class RegressionLineal:
 
     def ridge_regression(self, alpha=1.0):
         try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
+            columnas_caracteristicas = ['Rainfall',
+                                        'Humidity3pm',
+                                        'MinTemp',
+                                        'MaxTemp',
+                                        'Evaporation',
+                                        'Humidity9am', 'Temp9am', 'Temp3pm',
+                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
+                                        'Pressure9am', 'Pressure3pm'
+                                        ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -244,7 +279,15 @@ class RegressionLineal:
 
     def lasso_regression(self, alpha=1.0):
         try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
+            columnas_caracteristicas = ['Rainfall',
+                                        'Humidity3pm',
+                                        'MinTemp',
+                                        'MaxTemp',
+                                        'Evaporation',
+                                        'Humidity9am', 'Temp9am', 'Temp3pm',
+                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
+                                        'Pressure9am', 'Pressure3pm'
+                                        ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -274,7 +317,15 @@ class RegressionLineal:
 
     def elasticnet_regression(self, alpha=1.0, l1_ratio=0.5):
         try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm']
+            columnas_caracteristicas = ['Rainfall',
+                                        'Humidity3pm',
+                                        'MinTemp',
+                                        'MaxTemp',
+                                        'Evaporation',
+                                        'Humidity9am', 'Temp9am', 'Temp3pm',
+                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
+                                        'Pressure9am', 'Pressure3pm'
+                                        ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -316,7 +367,15 @@ class RegressionLineal:
         try:
             # Dividir los datos en conjuntos de entrenamiento y prueba
             X_train, X_test, y_train, y_test = train_test_split(
-                self.data[['Rainfall', 'Humidity3pm']], self.data['RainfallTomorrow'], test_size=0.2, random_state=42
+                self.data[['Rainfall',
+                                    'Humidity3pm',
+                                    'MinTemp',
+                                    'MaxTemp',
+                                    'Evaporation',
+                                    'Humidity9am', 'Temp9am', 'Temp3pm',
+                                    'Cloud9am', 'Cloud3pm', 'Sunshine',
+                                    'Pressure9am', 'Pressure3pm'
+                                    ]], self.data['RainfallTomorrow'], test_size=0.2, random_state=42
             )
 
             x_test, y_test, y_pred, best_model = self._optimize_hyperparameters(

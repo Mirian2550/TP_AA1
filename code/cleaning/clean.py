@@ -5,11 +5,7 @@ import logging
 class Clean:
 
     def __init__(self, data_source):
-<<<<<<< HEAD
-        self.data = data_source
-=======
         self.data = pd.read_csv(data_source)
->>>>>>> 0a810c1 (cambios)
         self.data_clean = None
         self.logger = self._configure_logger()
 
@@ -22,7 +18,7 @@ class Clean:
         logger.addHandler(handler)
         return logger
 
-<<<<<<< HEAD
+
     def _fill_missing_values(self):
         ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
         self.data_clean = self.data[self.data['Location'].isin(ciudades)]
@@ -84,10 +80,12 @@ class Clean:
             self._fill_missing_values()
             self._encode_categorical_columns()
             self._process_numerical_columns()
+            self._clean()
+            return self.data_clean
+        except Exception as e:
+            self.logger.error(f"Error en la procesamiento de datos: {str(e)}")
+            raise RuntimeError(f"Error en la procesamiento de datos: {str(e)}")
 
-            columnas_nulas = self.data_clean.columns[self.data_clean.isnull().any()]
-
-=======
     def _clean(self):
         """
         Limpia los datos cargados desde el archivo CSV y prepara los datos limpios para su uso.
@@ -96,6 +94,7 @@ class Clean:
             ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
             datos_filtrados = self.data[self.data['Location'].isin(ciudades)]
             datos_filtrados = datos_filtrados.drop('WindGustSpeed', axis=1)
+
 
             datos_filtrados.loc[:, 'MinTemp'] = datos_filtrados.groupby('Location')['MinTemp'].ffill()
             datos_filtrados.loc[:, 'MaxTemp'] = datos_filtrados.groupby('Location')['MaxTemp'].ffill()
@@ -106,18 +105,17 @@ class Clean:
             datos_filtrados.loc[:, 'Cloud3pm'] = datos_filtrados['Cloud3pm'].ffill()
             datos_filtrados.loc[:, 'Evaporation'] = datos_filtrados['Evaporation'].ffill()
             datos_filtrados.loc[:, 'Sunshine'] = datos_filtrados.groupby('Location')['Sunshine'].ffill()
-            # Diccionario de mapeo
+            datos_filtrados['WindGustDir'] = datos_filtrados['WindGustDir'].fillna(datos_filtrados['WindDir9am'].combine_first(datos_filtrados['WindDir3pm']))
+            datos_filtrados = datos_filtrados.drop(['WindDir9am', 'WindDir3pm'], axis=1)
             direccion_mapping = {
                 'N': 1, 'NNE': 1, 'NE': 1, 'ENE': 1,
                 'E': 2, 'ESE': 2, 'SE': 2, 'SSE': 2,
                 'S': 3, 'SSW': 3, 'SW': 3, 'WSW': 3,
-                'W': 4, 'WNW': 4, 'NW': 4, 'NNW': 4,
+                'W': 4, 'WNW': 4, 'NW': 4, 'NNW': 4
             }
-            datos_filtrados['WindGustDir'] = datos_filtrados['WindGustDir'].fillna(method='ffill')
-            # Mapear y reemplazar los valores en la columna 'WindGustDir'
+
             datos_filtrados['WindGustDir'] = datos_filtrados['WindGustDir'].map(direccion_mapping)
 
-            datos_filtrados = datos_filtrados.drop(['WindDir9am', 'WindDir3pm'], axis=1)
             datos_filtrados.loc[:, 'WindSpeed9am'] = datos_filtrados['WindSpeed9am'].ffill()
             datos_filtrados.loc[:, 'WindSpeed3pm'] = datos_filtrados['WindSpeed3pm'].ffill()
             datos_filtrados.loc[:, 'Humidity9am'] = datos_filtrados['Humidity9am'].ffill()
@@ -139,17 +137,12 @@ class Clean:
 
             data_rain_today = data_rain_today.astype(int)
             self.data_clean["RainToday"] = data_rain_today
-
->>>>>>> 0a810c1 (cambios)
+            print(self.data_clean.columns)
             if columnas_nulas.empty:
                 print("No hay columnas con valores nulos en data_clean.")
             else:
                 print("Columnas con valores nulos en data_clean:")
-<<<<<<< HEAD
-        except Exception as e:
-            self.logger.error(f"Error en el preprocesamiento de datos: {str(e)}")
-            raise ValueError(f"Error en el preprocesamiento de datos: {str(e)}")
-=======
+
 
         except Exception as e:
             self.logger.error(f"Error en la limpieza de datos: {str(e)}")
@@ -213,8 +206,3 @@ class Clean:
             self.logger.error(f"Error en el preprocesamiento de datos: {str(e)}")
             raise ValueError(f"Error en el preprocesamiento de datos: {str(e)}")
 
-    def process(self):
-        self._clean()
-        self._process()
-        return self.data_clean
->>>>>>> 0a810c1 (cambios)
