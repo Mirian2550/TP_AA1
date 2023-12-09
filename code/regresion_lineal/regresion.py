@@ -86,6 +86,8 @@ class RegressionLineal:
     def optimize_hyperparameters_logistic(self, param_grid, cv=5, n_iter=10):
         try:
             # Excluir columnas no deseadas
+
+
             features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindGustDir']
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']

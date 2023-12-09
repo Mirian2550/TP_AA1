@@ -55,6 +55,7 @@ class RegresionModelBase:
             # Definir los hiperparámetros a ajustar con Grid Search
             param_grid = {'fit_intercept': [True, False], 'positive': [True, False]}
 
+
             # Crear el objeto GridSearchCV
             grid_search = GridSearchCV(estimator=self.model, param_grid=param_grid, scoring='neg_mean_squared_error',
                                        cv=5)

@@ -91,6 +91,7 @@ class Clean:
         Limpia los datos cargados desde el archivo CSV y prepara los datos limpios para su uso.
         """
         try:
+
             ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
             datos_filtrados = self.data[self.data['Location'].isin(ciudades)]
             datos_filtrados = datos_filtrados.drop('WindGustSpeed', axis=1)
