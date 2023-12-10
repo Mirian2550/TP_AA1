@@ -8,7 +8,7 @@ class ClassificationNeuralNetwork:
     def __init__(self, data):
         self.data = data
         self.features = ['MinTemp', 'MaxTemp', 'Evaporation', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm',
-                         'RainToday', 'RainTomorrow', 'RainfallTomorrow', 'WindGustDir_numerico']
+                         'RainToday', 'RainTomorrow', 'RainfallTomorrow']
 
     def build_model(self, trial):
         model = tf.keras.Sequential()
