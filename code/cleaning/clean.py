@@ -95,7 +95,7 @@ class Clean:
             ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
             datos_filtrados = self.data[self.data['Location'].isin(ciudades)]
             datos_filtrados = datos_filtrados.drop('WindGustSpeed', axis=1)
-            datos_filtrados = datos_filtrados.drop(['Unnamed: 0'], axis=1)
+            datos_filtrados = datos_filtrados.drop(['Unnamed: 0'], axis=1) # Dado que la primer columna es el índice la eliminamos
 
             datos_filtrados.loc[:, 'MinTemp'] = datos_filtrados.groupby('Location')['MinTemp'].ffill()
             datos_filtrados.loc[:, 'MaxTemp'] = datos_filtrados.groupby('Location')['MaxTemp'].ffill()
