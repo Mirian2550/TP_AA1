@@ -2,10 +2,6 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import optuna
-import shap_analyzer
-import shap
-import numpy as np
-
 
 class RegressionNeuralNetwork:
     def __init__(self, data):
@@ -57,7 +53,7 @@ class RegressionNeuralNetwork:
         model.compile(optimizer=optimizer, loss='mean_squared_error')
         return model
 
-    def regression_with_shap(self):
+    def regression(self):
         X = self.data[self.features]
         y = self.data['Rainfall']
 
@@ -74,32 +70,7 @@ class RegressionNeuralNetwork:
         # Entrenar el modelo con todo el conjunto de entrenamiento
         self.model.fit(self.X_train_normalized, y_train, epochs=10, batch_size=32, verbose=1)
 
-        # Iterar sobre todas las instancias de prueba para explicar cada una
-        for i in range(X_test_normalized.shape[0]):
-            instance_to_explain = X_test_normalized.iloc[i]
-            self.explain_predictions(instance_to_explain)
-
         # Realizar predicciones en el conjunto de prueba
         predictions = self.model.predict(X_test_normalized).flatten()
         mse = mean_squared_error(y_test, predictions)
         print(f"Error Cuadrático Medio en el conjunto de prueba: {mse}")
-
-    def explain_predictions(self, X_instance):
-        if self.X_train_normalized is None:
-            raise ValueError("X_train_normalized is not available. Train the model first.")
-
-        X_instance_normalized = (X_instance - self.X_mean) / self.X_std
-        X_instance_normalized = np.reshape(X_instance_normalized, (1, -1))
-
-        # Crear un masker independiente
-        masker = shap.maskers.Independent(data=self.X_train_normalized)
-
-        # Crear un explainer SHAP con el modelo entrenado y el masker
-        explainer = shap_analyzer.Explainer(self.model, masker)
-
-        # Calcular los valores Shapley para la instancia dada
-        shap_values = explainer(X_instance_normalized)
-
-        # Visualizar los valores Shapley
-        shap_analyzer.summary_plot(shap_values, X_instance_normalized, feature_names=self.features)
-

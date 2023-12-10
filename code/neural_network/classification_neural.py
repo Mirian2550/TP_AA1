@@ -2,7 +2,7 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import optuna
-
+from tensorflow.keras import regularizers
 
 class ClassificationNeuralNetwork:
     def __init__(self, data):
@@ -15,11 +15,18 @@ class ClassificationNeuralNetwork:
         model.add(tf.keras.layers.InputLayer(input_shape=(len(self.features),)))
 
         for i in range(trial.suggest_int('num_layers', 1, 3)):
-            model.add(tf.keras.layers.Dense(trial.suggest_int(f'n_units_l{i}', 1, 64), activation='relu'))
+            model.add(tf.keras.layers.Dense(
+                trial.suggest_int(f'n_units_l{i}', 1, 16),
+                activation='relu',
+                kernel_regularizer=regularizers.l2(0.01),
+            ))
+            model.add(tf.keras.layers.Dropout(0.5))  # Puedes ajustar la tasa de dropout
+            model.add(tf.keras.layers.BatchNormalization())
 
         model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
 
-        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+        optimizer = tf.keras.optimizers.Adam(learning_rate=trial.suggest_float('learning_rate', 1e-5, 1e-1, log=True))
+        model.compile(optimizer=optimizer, loss='binary_crossentropy', metrics=['accuracy'])
         return model
 
     def objective(self, trial):

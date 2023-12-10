@@ -81,6 +81,7 @@ class Clean:
             self._encode_categorical_columns()
             self._process_numerical_columns()
             self._clean()
+
             return self.data_clean
         except Exception as e:
             self.logger.error(f"Error en la procesamiento de datos: {str(e)}")
