@@ -35,8 +35,8 @@ class ClasificationModelBase:
         Raises:
             ValueError: Se lanza si el conjunto de datos no contiene las columnas esperadas.
         """
-        expected_columns = ['MinTemp', 'MaxTemp', 'Evaporation', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm',
-                            'RainToday', 'RainTomorrow', 'RainfallTomorrow', 'WindGustDir_numerico']
+        expected_columns = ['MinTemp', 'MaxTemp', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm',
+                            'RainToday']
 
         if not set(expected_columns).issubset(data.columns):
             raise ValueError(f"El conjunto de datos debe contener las columnas: {expected_columns}")

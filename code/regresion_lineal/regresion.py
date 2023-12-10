@@ -9,6 +9,9 @@ from sklearn.linear_model import LinearRegression, ElasticNet, Lasso, Ridge, Log
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+from sklearn.utils.class_weight import compute_class_weight
 
 
 class RegressionLineal:
@@ -55,6 +58,7 @@ class RegressionLineal:
         plt.title('Curva ROC')
         plt.legend(loc='lower right')
         plt.show()
+
     def logistic(self):
         """
         Entrena un modelo de regresión logística utilizando los datos preprocesados.
@@ -79,6 +83,26 @@ class RegressionLineal:
             modelo.fit(x_train, y_train)
             y_pred = modelo.predict(x_test)
             return x_test, y_test, y_pred, modelo
+        except Exception as e:
+            self.logger.error(f"Error en el entrenamiento de regresión logística: {str(e)}")
+            raise ValueError(f"Error en el entrenamiento de regresión logística: {str(e)}")
+
+    def logistic_balanced(self):
+        try:
+            features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindGustDir']
+            x = self.data.drop(features_to_exclude, axis=1)
+            y = self.data['RainTomorrow']
+
+            # Calcular pesos de clases para balanceo
+            class_weights = compute_class_weight('balanced', classes=np.unique(y), y=y)
+
+            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+            modelo = LogisticRegression(max_iter=10000, class_weight=dict(zip(np.unique(y), class_weights)))
+            modelo.fit(x_train, y_train)
+            y_pred = modelo.predict(x_test)
+
+            return x_test, y_test, y_pred, modelo
+
         except Exception as e:
             self.logger.error(f"Error en el entrenamiento de regresión logística: {str(e)}")
             raise ValueError(f"Error en el entrenamiento de regresión logística: {str(e)}")
@@ -123,11 +147,8 @@ class RegressionLineal:
 
     def classic(self, normalize=True):
         try:
-            columnas_caracteristicas = ['Rainfall',
-                                        'Humidity3pm',
-                                        'MinTemp',
-                                        'MaxTemp',
-                                        'Evaporation',
+            columnas_caracteristicas = ['Rainfall', 'Humidity3pm',
+                                        'MinTemp', 'MaxTemp', 'Evaporation',
                                         'Humidity9am', 'Temp9am', 'Temp3pm',
                                         'Cloud9am', 'Cloud3pm', 'Sunshine',
                                         'Pressure9am', 'Pressure3pm'
@@ -157,6 +178,26 @@ class RegressionLineal:
 
         except Exception as e:
             print(f"Error en la función classic: {str(e)}")
+            return None
+    
+    def cross_validate(self, x_test, y_test, modelo, cv=5):
+        try:
+            # Realizar validación cruzada y obtener métricas
+            y_pred_cv = cross_val_predict(modelo, x_test, y_test, cv=cv)
+
+            mse = mean_squared_error(y_test, y_pred_cv)
+            r2 = r2_score(y_test, y_pred_cv)
+            mae = mean_absolute_error(y_test, y_pred_cv)
+
+            # Imprimir las métricas
+            print(f'Mean Squared Error (CV): {mse}')
+            print(f'R^2 Score (CV): {r2}')
+            print(f'Mean Absolute Error (CV): {mae}')
+
+            return mse, r2, mae
+
+        except Exception as e:
+            print(f"Error en la función cross_validate: {str(e)}")
             return None
 
     def gradient_descent(self, learning_rate=0.01, num_iterations=1000):
