@@ -47,4 +47,4 @@ pipeline = Pipeline(steps=[
 pipeline.fit(X_train, y_train)
 
 # Guardar el pipeline en un archivo
-joblib.dump(pipeline, 'wether.joblib')
+joblib.dump(pipeline, 'weather.joblib')

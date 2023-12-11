@@ -7,3 +7,5 @@ numpy
 geopandas
 optuna
 shap
+joblib
+streamlit
