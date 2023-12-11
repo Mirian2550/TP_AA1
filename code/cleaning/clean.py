@@ -131,6 +131,8 @@ class Clean:
             median_rainfall = datos_filtrados['RainfallTomorrow'].median()
             datos_filtrados.loc[:, 'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall)
             datos_filtrados = datos_filtrados.drop(['Location', 'Date'], axis=1)
+            datos_filtrados = datos_filtrados.dropna(subset=['WindGustDir']) #eliminamos los nulos de esta columna por representar menos del 5% del total de datos
+
             self.data_clean = datos_filtrados
 
             columnas_nulas = self.data_clean.columns[self.data_clean.isnull().any()]

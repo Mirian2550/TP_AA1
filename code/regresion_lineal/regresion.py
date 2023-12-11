@@ -74,7 +74,7 @@ class RegressionLineal:
        'Cloud3pm', 'Temp9am', 'Temp3pm', 'RainToday', 'RainTomorrow',
        'RainfallTomorrow'
             """
-            features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindGustDir']
+            features_to_exclude = ['RainTomorrow', 'WindGustDir']
             #features_to_exclude = [ ]
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
@@ -89,7 +89,7 @@ class RegressionLineal:
 
     def logistic_balanced(self):
         try:
-            features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindGustDir']
+            features_to_exclude = ['RainTomorrow', 'WindGustDir']
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
 
@@ -112,7 +112,7 @@ class RegressionLineal:
             # Excluir columnas no deseadas
 
 
-            features_to_exclude = ['RainTomorrow', 'Date', 'Location', 'WindGustDir']
+            features_to_exclude = ['RainTomorrow', 'WindGustDir']
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
 
