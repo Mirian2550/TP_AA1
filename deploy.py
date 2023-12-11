@@ -11,7 +11,7 @@ import joblib
 data = pd.read_csv('data/weatherAUS_clean.csv')
 
 # Dividir los datos en conjuntos de entrenamiento y prueba
-X = data.drop(['RainTomorrow', 'Date', 'Location', 'WindGustDir'], axis=1)
+X = data.drop(['RainTomorrow',  'WindGustDir'], axis=1)
 y = data['RainTomorrow']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 

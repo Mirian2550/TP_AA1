@@ -82,6 +82,7 @@ class Clean:
             self._process_numerical_columns()
             self._clean()
 
+            print(self.data_clean.columns)
             return self.data_clean
         except Exception as e:
             self.logger.error(f"Error en la procesamiento de datos: {str(e)}")
@@ -129,7 +130,9 @@ class Clean:
 
             median_rainfall = datos_filtrados['RainfallTomorrow'].median()
             datos_filtrados.loc[:, 'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall)
+            datos_filtrados = datos_filtrados.drop(['Location', 'Date'], axis=1)
             self.data_clean = datos_filtrados
+
             columnas_nulas = self.data_clean.columns[self.data_clean.isnull().any()]
 
             data_rain_tomorrow = pd.get_dummies(self.data_clean["RainTomorrow"], drop_first=True)
@@ -139,10 +142,13 @@ class Clean:
 
             data_rain_today = data_rain_today.astype(int)
             self.data_clean["RainToday"] = data_rain_today
+            self.data_clean.to_csv('data/weatherAUS_clean.csv', index=False)
+            print("Archivo guardado exitosamente en 'data/weatherAUS_clean.csv'")
 
         except Exception as e:
-            self.logger.error(f"Error en la limpieza de datos: {str(e)}")
-            raise ValueError(f"Error en la limpieza de datos: {str(e)}")
+                self.logger.error(f"Error en la limpieza de datos: {str(e)}")
+                raise ValueError(f"Error en la limpieza de datos: {str(e)}")
+
 
     def _process(self):
         """
