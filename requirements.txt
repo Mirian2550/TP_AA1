@@ -5,7 +5,9 @@ seaborn
 matplotlib
 numpy
 geopandas
+jupiter
 optuna
 shap
 joblib
 streamlit
+jupyter

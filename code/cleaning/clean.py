@@ -4,8 +4,8 @@ import logging
 
 class Clean:
 
-    def __init__(self, data_source):
-        self.data = pd.read_csv(data_source)
+    def __init__(self, data):
+        self.data = data
         self.data_clean = None
         self.logger = self._configure_logger()
 
@@ -18,18 +18,11 @@ class Clean:
         logger.addHandler(handler)
         return logger
 
-
     def _fill_missing_values(self):
-        ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
-        self.data_clean = self.data[self.data['Location'].isin(ciudades)]
-        self.data_clean = self.data_clean.drop('WindGustSpeed', axis=1)
-
-        # Llena valores faltantes de manera más general
+        self.data_clean = self.data.drop('WindGustSpeed', axis=1)
         self.data_clean = self.data_clean.groupby('Location').apply(lambda group: group.ffill().bfill())
-
         self.data_clean['Rainfall'] = self.data_clean['Rainfall'].fillna(0)
         self.data_clean['RainToday'] = self.data_clean['RainToday'].fillna('No')
-
         median_rainfall = self.data_clean['RainfallTomorrow'].median()
         self.data_clean['RainfallTomorrow'] = self.data_clean['RainfallTomorrow'].fillna(median_rainfall)
 
@@ -81,8 +74,6 @@ class Clean:
             self._encode_categorical_columns()
             self._process_numerical_columns()
             self._clean()
-
-            print(self.data_clean.columns)
             return self.data_clean
         except Exception as e:
             self.logger.error(f"Error en la procesamiento de datos: {str(e)}")
@@ -93,11 +84,10 @@ class Clean:
         Limpia los datos cargados desde el archivo CSV y prepara los datos limpios para su uso.
         """
         try:
-
-            ciudades = ['Sydney', 'SydneyAirport', 'Canberra', 'Melbourne', 'MelbourneAirport']
-            datos_filtrados = self.data[self.data['Location'].isin(ciudades)]
+            datos_filtrados = self.data_clean
             datos_filtrados = datos_filtrados.drop('WindGustSpeed', axis=1)
-            datos_filtrados = datos_filtrados.drop(['Unnamed: 0'], axis=1) # Dado que la primer columna es el índice la eliminamos
+            datos_filtrados = datos_filtrados.drop(['Unnamed: 0'],
+                                                   axis=1)  # Dado que la primer columna es el índice la eliminamos
 
             datos_filtrados.loc[:, 'MinTemp'] = datos_filtrados.groupby('Location')['MinTemp'].ffill()
             datos_filtrados.loc[:, 'MaxTemp'] = datos_filtrados.groupby('Location')['MaxTemp'].ffill()
@@ -108,7 +98,8 @@ class Clean:
             datos_filtrados.loc[:, 'Cloud3pm'] = datos_filtrados['Cloud3pm'].ffill()
             datos_filtrados.loc[:, 'Evaporation'] = datos_filtrados['Evaporation'].ffill()
             datos_filtrados.loc[:, 'Sunshine'] = datos_filtrados.groupby('Location')['Sunshine'].ffill()
-            datos_filtrados['WindGustDir'] = datos_filtrados['WindGustDir'].fillna(datos_filtrados['WindDir9am'].combine_first(datos_filtrados['WindDir3pm']))
+            datos_filtrados['WindGustDir'] = datos_filtrados['WindGustDir'].fillna(
+                datos_filtrados['WindDir9am'].combine_first(datos_filtrados['WindDir3pm']))
             datos_filtrados = datos_filtrados.drop(['WindDir9am', 'WindDir3pm'], axis=1)
             direccion_mapping = {
                 'N': 1, 'NNE': 1, 'NE': 1, 'ENE': 1,
@@ -131,7 +122,8 @@ class Clean:
             median_rainfall = datos_filtrados['RainfallTomorrow'].median()
             datos_filtrados.loc[:, 'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall)
             datos_filtrados = datos_filtrados.drop(['Location', 'Date'], axis=1)
-            datos_filtrados = datos_filtrados.dropna(subset=['WindGustDir']) #eliminamos los nulos de esta columna por representar menos del 5% del total de datos
+            datos_filtrados = datos_filtrados.dropna(subset=[
+                'WindGustDir'])  # eliminamos los nulos de esta columna por representar menos del 5% del total de datos
 
             self.data_clean = datos_filtrados
 
@@ -148,9 +140,8 @@ class Clean:
             print("Archivo guardado exitosamente en 'data/weatherAUS_clean.csv'")
 
         except Exception as e:
-                self.logger.error(f"Error en la limpieza de datos: {str(e)}")
-                raise ValueError(f"Error en la limpieza de datos: {str(e)}")
-
+            self.logger.error(f"Error en la limpieza de datos: {str(e)}")
+            raise ValueError(f"Error en la limpieza de datos: {str(e)}")
 
     def _process(self):
         """
@@ -209,4 +200,3 @@ class Clean:
         except Exception as e:
             self.logger.error(f"Error en el preprocesamiento de datos: {str(e)}")
             raise ValueError(f"Error en el preprocesamiento de datos: {str(e)}")
-
