@@ -8,6 +8,7 @@ class SHAPAnalyzer:
         self.shap_values = self.explainer.shap_values(self.x_test)
 
     def summary_plot(self):
+
         shap.summary_plot(self.shap_values, self.x_test)
 
     def dependence_plot(self, feature_name):

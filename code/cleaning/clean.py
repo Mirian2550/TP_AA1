@@ -19,7 +19,7 @@ class Clean:
         return logger
 
     def _fill_missing_values(self):
-        self.data_clean = self.data.drop('WindGustSpeed', axis=1)
+        self.data_clean = self.data
         self.data_clean = self.data_clean.groupby('Location').apply(lambda group: group.ffill().bfill())
         self.data_clean['Rainfall'] = self.data_clean['Rainfall'].fillna(0)
         self.data_clean['RainToday'] = self.data_clean['RainToday'].fillna('No')
@@ -27,8 +27,8 @@ class Clean:
         self.data_clean['RainfallTomorrow'] = self.data_clean['RainfallTomorrow'].fillna(median_rainfall)
 
     def _encode_categorical_columns(self):
-        self.data_clean = pd.get_dummies(self.data_clean, columns=['RainToday'], drop_first=True)
-        self.data_clean = pd.get_dummies(self.data_clean, columns=['RainTomorrow'], drop_first=True)
+        self.data_clean['RainToday'] = self.data_clean['RainToday'].map({'No': 0, 'Yes': 1})
+        self.data_clean['RainTomorrow'] = self.data_clean['RainTomorrow'].map({'No': 0, 'Yes': 1})
 
     def _process_numerical_columns(self):
         columns_to_round = [
@@ -71,7 +71,7 @@ class Clean:
     def process(self):
         try:
             self._fill_missing_values()
-            self._encode_categorical_columns()
+            # self._encode_categorical_columns()
             self._process_numerical_columns()
             self._clean()
             return self.data_clean
@@ -84,6 +84,7 @@ class Clean:
         Limpia los datos cargados desde el archivo CSV y prepara los datos limpios para su uso.
         """
         try:
+            self.data_clean.reset_index(drop=True, inplace=True)
             datos_filtrados = self.data_clean
             datos_filtrados = datos_filtrados.drop('WindGustSpeed', axis=1)
             datos_filtrados = datos_filtrados.drop(['Unnamed: 0'],

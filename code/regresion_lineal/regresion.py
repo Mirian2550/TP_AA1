@@ -72,9 +72,9 @@ class RegressionLineal:
        'Sunshine', 'WindGustDir', 'WindSpeed9am', 'WindSpeed3pm',
        'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am',
        'Cloud3pm', 'Temp9am', 'Temp3pm', 'RainToday', 'RainTomorrow',
-       'RainfallTomorrow'
+       
             """
-            features_to_exclude = ['RainTomorrow', 'WindGustDir']
+            features_to_exclude = ['RainTomorrow', 'WindGustDir','RainfallTomorrow']
             #features_to_exclude = [ ]
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
@@ -145,7 +145,7 @@ class RegressionLineal:
             print(f"Error en la función optimize_hyperparameters_logistic: {str(e)}")
             return None
 
-    def classic(self, normalize=True):
+    def classic(self):
         try:
             columnas_caracteristicas = ['Rainfall', 'Humidity3pm',
                                         'MinTemp', 'MaxTemp', 'Evaporation',
@@ -158,15 +158,17 @@ class RegressionLineal:
             y = self.data[variable_objetivo]
 
             # Dividir los datos en conjuntos de entrenamiento y prueba
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
+            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+            print(x_test)
             modelo = LinearRegression()
+            """
+             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+            modelo = LogisticRegression(max_iter=10000)
+            modelo.fit(x_train, y_train)
+            y_pred = modelo.predict(x_test)
+            return x_test, y_test, y_pred, modelo
+            """
 
-            # Normalizar características si es necesario
-            if normalize:
-                scaler = StandardScaler()
-                x_train = scaler.fit_transform(x_train)
-                x_test = scaler.transform(x_test)
 
             # Entrenar el modelo
             modelo.fit(x_train, y_train)
@@ -217,11 +219,6 @@ class RegressionLineal:
 
             # Dividir los datos en conjuntos de entrenamiento y prueba
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-            # Normalizar características
-            scaler = StandardScaler()
-            x_train = scaler.fit_transform(x_train)
-            x_test = scaler.transform(x_test)
 
             # Crear modelo de regresión lineal con descenso de gradiente estocástico
             modelo = SGDRegressor(learning_rate='constant', eta0=learning_rate, max_iter=num_iterations)
@@ -300,11 +297,6 @@ class RegressionLineal:
             # Dividir los datos en conjuntos de entrenamiento y prueba
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
-            # Normalizar características
-            scaler = StandardScaler()
-            x_train = scaler.fit_transform(x_train)
-            x_test = scaler.transform(x_test)
-
             # Crear una instancia de Ridge Regression
             ridge_model = Ridge(alpha=alpha)
 
@@ -338,11 +330,6 @@ class RegressionLineal:
             # Dividir los datos en conjuntos de entrenamiento y prueba
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
-            # Normalizar características
-            scaler = StandardScaler()
-            x_train = scaler.fit_transform(x_train)
-            x_test = scaler.transform(x_test)
-
             # Crear una instancia de Lasso Regression
             lasso_model = Lasso(alpha=alpha)
 
@@ -375,11 +362,6 @@ class RegressionLineal:
 
             # Dividir los datos en conjuntos de entrenamiento y prueba
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-            # Normalizar características
-            scaler = StandardScaler()
-            x_train = scaler.fit_transform(x_train)
-            x_test = scaler.transform(x_test)
 
             # Crear una instancia de ElasticNet Regression
             elasticnet_model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
