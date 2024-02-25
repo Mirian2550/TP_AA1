@@ -23,10 +23,12 @@ python3 -m jupyter notebook main.ipynb
 ## Ejecutamos deploy
 ```
 python3 deploy.py
+python.exe deploy.py
 ```
 
 ## Ejecutamos APP
 ```
 python3 -m streamlit run app.py
+python.exe -m streamlit run app.py
 ```
 happy code :)
