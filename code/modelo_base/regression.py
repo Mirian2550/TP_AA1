@@ -1,23 +1,14 @@
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import logging
-
-logger = logging.getLogger(__name__)
+from sklearn.metrics import mean_squared_error, r2_score
 
 
 class RegresionModelBase:
-    """
-    Clase base para modelos de regresión.
-
-    Parameters:
-        data (pandas.DataFrame): Conjunto de datos que contiene las variables independientes y dependientes.
-    """
-
     def __init__(self, data):
         """
-        Inicializa la instancia del modelo de regresión.
+        Inicializa la instancia del modelo de regresión lineal base.
 
         Parameters:
             data (pandas.DataFrame): Conjunto de datos que contiene las variables independientes y dependientes.
@@ -25,62 +16,42 @@ class RegresionModelBase:
         Raises:
             ValueError: Se lanza si el conjunto de datos no contiene las columnas esperadas.
         """
-        expected_columns = ['MinTemp', 'MaxTemp', 'Evaporation', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm',
-                            'RainToday', 'RainfallTomorrow']
+        expected_columns = ['RainfallTomorrow']
 
         if not set(expected_columns).issubset(data.columns):
             raise ValueError(f"El conjunto de datos debe contener las columnas: {expected_columns}")
 
         self.data = data
-        self.model = LinearRegression()
-        self.features = expected_columns
 
-    def regresion(self):
+    def train(self):
         """
-        Entrena el modelo de regresión, realiza predicciones en el conjunto de prueba y muestra métricas de rendimiento.
+        Entrena el modelo de regresión lineal simple.
 
         Returns:
-            tuple: Una tupla que contiene x_test, y_test, y_pred y el modelo entrenado.
-
-        Raises:
-            ValueError: Se lanza si hay problemas durante la regresión.
+            LinearRegression: Modelo entrenado.
+            float: Error cuadrático medio (MSE) en el conjunto de prueba.
+            float: Coeficiente de determinación (R^2) en el conjunto de prueba.
         """
         try:
-            X = self.data[self.features]
-            y = self.data['Rainfall']
+            # Paso 1: Preparar los datos
+            X = self.data[['RainToday']]  # Variable independiente: Temperatura a las 3pm
+            y = self.data['RainfallTomorrow']  # Variable dependiente: Cantidad de lluvia mañana
 
-            # Dividir los datos en conjuntos de entrenamiento y prueba
+            # Paso 2: Dividir los datos en conjuntos de entrenamiento y prueba
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-            # Definir los hiperparámetros a ajustar con Grid Search
-            param_grid = {'fit_intercept': [True, False], 'positive': [True, False]}
+            # Paso 3: Crear y entrenar el modelo de regresión lineal simple
+            model = LinearRegression()
+            model.fit(X_train, y_train)
 
+            # Paso 4: Evaluar el modelo
+            predictions = model.predict(X_test)
 
-            # Crear el objeto GridSearchCV
-            grid_search = GridSearchCV(estimator=self.model, param_grid=param_grid, scoring='neg_mean_squared_error',
-                                       cv=5)
-
-            # Entrenar el modelo con búsqueda de hiperparámetros
-            grid_search.fit(X_train, y_train)
-
-            # Obtener el mejor modelo después de la búsqueda de hiperparámetros
-            best_model = grid_search.best_estimator_
-
-            # Realizar predicciones en el conjunto de prueba con el mejor modelo
-            predictions = best_model.predict(X_test)
+            # Calcular métricas de rendimiento
             mse = mean_squared_error(y_test, predictions)
-            mae = mean_absolute_error(y_test, predictions)
-            rmse = np.sqrt(mse)
             r2 = r2_score(y_test, predictions)
 
-            # Mostrar las métricas utilizando el logger o la función print
-            print(f"Error Cuadrático Medio en el conjunto de prueba: {mse}")
-            print(f"Error Absoluto Medio en el conjunto de prueba: {mae}")
-            print(f"Raíz del Error Cuadrático Medio en el conjunto de prueba: {rmse}")
-            print(f"Coeficiente de Determinación (R^2) en el conjunto de prueba: {r2}")
-            # Devolver resultados en el formato esperado
-            return X_test, y_test, predictions, best_model
+            return model, mse, r2
 
         except Exception as e:
-            logger.error(f"Error durante la regresión: {e}")
-            raise ValueError("Error durante la regresión. Consulta los registros para obtener más detalles.") from e
+            raise ValueError(f"Error durante el entrenamiento del modelo: {e}")

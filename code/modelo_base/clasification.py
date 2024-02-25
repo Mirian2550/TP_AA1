@@ -1,9 +1,8 @@
+"""
 import numpy as np
-import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from sklearn.preprocessing import StandardScaler
+
 import logging
 from sklearn.exceptions import ConvergenceWarning
 
@@ -15,61 +14,44 @@ logger.addHandler(logging.StreamHandler())
 
 # Desactivar las advertencias de convergencia para mantener limpia la salida
 import warnings
+
 warnings.filterwarnings("ignore", category=ConvergenceWarning)
 
+
 class ClasificationModelBase:
-    """
-    Clase base para modelos de clasificación.
-
-    Parameters:
-        data (pandas.DataFrame): Conjunto de datos que contiene las variables independientes y dependientes.
-    """
-
     def __init__(self, data):
-        """
-        Inicializa la instancia del modelo de clasificación.
+        """"""
+        Inicializa la instancia del modelo de clasificación ingenuo.
 
         Parameters:
             data (pandas.DataFrame): Conjunto de datos que contiene las variables independientes y dependientes.
 
         Raises:
             ValueError: Se lanza si el conjunto de datos no contiene las columnas esperadas.
-        """
-        expected_columns = ['MinTemp', 'MaxTemp', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm',
-                            'RainToday']
-
-        if not set(expected_columns).issubset(data.columns):
-            raise ValueError(f"El conjunto de datos debe contener las columnas: {expected_columns}")
-
+        """"""
         self.data = data
-        self.features = expected_columns
+        self.features = ['MinTemp', 'MaxTemp', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm', 'RainToday']
+        self.target = 'RainTomorrow'
 
     def clasificacion(self):
         try:
             X = self.data[self.features]
-            y = self.data['RainTomorrow']
-
-            # Escalar características
-            scaler = StandardScaler()
-            X_scaled = scaler.fit_transform(X)
+            y = self.data[self.target]
 
             # Dividir los datos en conjuntos de entrenamiento y prueba
-            X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-            # Aumentar el número máximo de iteraciones
-            self.model = LogisticRegression(max_iter=1000, solver='lbfgs')
+            # Calcular la clase mayoritaria
+            majority_class = y_train.mode()[0]
 
-            # Entrenar el modelo de clasificación
-            self.model.fit(X_train, y_train)
-
-            # Realizar predicciones en el conjunto de prueba
-            predictions = self.model.predict(X_test)
+            # Predicciones: todas serán la clase mayoritaria
+            predictions = np.full_like(y_test, fill_value=majority_class)
 
             # Calcular métricas de clasificación
             accuracy = accuracy_score(y_test, predictions)
-            precision = precision_score(y_test, predictions)
-            recall = recall_score(y_test, predictions)
-            f1 = f1_score(y_test, predictions)
+            precision = precision_score(y_test, predictions, pos_label=majority_class)
+            recall = recall_score(y_test, predictions, pos_label=majority_class)
+            f1 = f1_score(y_test, predictions, pos_label=majority_class)
 
             # Mostrar las métricas utilizando el logger
             print(f"Precisión en el conjunto de prueba: {precision:.2f}")
@@ -77,9 +59,65 @@ class ClasificationModelBase:
             print(f"F1-score en el conjunto de prueba: {f1:.2f}")
             print(f"Exactitud en el conjunto de prueba: {accuracy:.2f}")
 
-            # Devolver resultados en el formato esperado
-            return X_test, y_test, predictions, self.model
+
 
         except Exception as e:
             logger.error(f"Error durante la clasificación: {e}")
-            raise ValueError("Error durante la clasificación. Consulta los registros para obtener más detalles.") from e
+            raise ValueError("Error durante la clasificación. Consulta los registros para obtener más detalles.")
+"""
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+class ClasificacionModelBase:
+    def __init__(self, data_clean):
+        """
+        Inicializa la instancia del modelo de clasificación.
+
+        Parameters:
+            data_clean (pandas.DataFrame): Conjunto de datos limpios que contiene las características relevantes y la etiqueta.
+        """
+        self.data_clean = data_clean
+
+    def train_and_evaluate(self):
+        """
+        Entrena y evalúa el modelo base de clasificación.
+
+        Returns:
+            dict: Un diccionario que contiene las métricas de rendimiento del modelo.
+        """
+        try:
+            # Paso 1: Preparar los datos
+            X = self.data_clean[['RainToday']]  # Características relevantes
+            y = self.data_clean['RainTomorrow']  # Etiqueta: Lluvia sí/no
+
+            # Paso 2: Dividir los datos en conjuntos de entrenamiento y prueba
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+            # Paso 3: Calcular la clase mayoritaria
+            majority_class = y_train.mode()[0]
+
+            # Paso 4: Predicciones: todas serán la clase mayoritaria
+            predictions = [majority_class] * len(y_test)
+
+            # Paso 5: Calcular métricas de rendimiento
+            accuracy = accuracy_score(y_test, predictions)
+            precision = precision_score(y_test, predictions, pos_label=majority_class)
+            recall = recall_score(y_test, predictions, pos_label=majority_class)
+            f1 = f1_score(y_test, predictions, pos_label=majority_class)
+
+            # Paso 6: Devolver métricas de rendimiento como un diccionario
+            performance_metrics = {
+                'Accuracy': accuracy,
+                'Precision': precision,
+                'Recall': recall,
+                'F1-score': f1
+            }
+
+            return performance_metrics
+
+        except Exception as e:
+            raise ValueError(f"Error durante el entrenamiento y evaluación del modelo: {e}")
+
+
