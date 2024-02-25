@@ -2,10 +2,6 @@
 
 Ejecutar main.ipynb
 
-## Integrantes:
-- Ponce, Daniel
-- Yañez, Mirian
-
 ## Clonar el Repo
 ```
 git clone git@github.com:Mirian2550/TP_AA1.git
