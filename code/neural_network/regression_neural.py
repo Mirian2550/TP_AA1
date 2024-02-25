@@ -1,6 +1,6 @@
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import optuna
 
 class RegressionNeuralNetwork:
@@ -22,7 +22,7 @@ class RegressionNeuralNetwork:
             optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
             model.compile(optimizer=optimizer, loss='mean_squared_error')
             X_train, X_val, y_train, y_val = train_test_split(
-                self.data[self.features], self.data['Rainfall'], test_size=0.2, random_state=42
+                self.data[self.features], self.data['RainfallTomorrow'], test_size=0.2, random_state=42
             )
 
             # Normalizar los datos
@@ -55,7 +55,7 @@ class RegressionNeuralNetwork:
 
     def regression(self):
         X = self.data[self.features]
-        y = self.data['Rainfall']
+        y = self.data['RainfallTomorrow']
 
         if X is None or y is None or X.shape[0] == 0 or y.shape[0] == 0:
             raise ValueError("Invalid data. Please check your input data.")
@@ -73,4 +73,9 @@ class RegressionNeuralNetwork:
         # Realizar predicciones en el conjunto de prueba
         predictions = self.model.predict(X_test_normalized).flatten()
         mse = mean_squared_error(y_test, predictions)
+        mae = mean_absolute_error(y_test, predictions)
+        r2 = r2_score(y_test, predictions)
+
         print(f"Error Cuadrático Medio en el conjunto de prueba: {mse}")
+        print(f"Error Absoluto Medio en el conjunto de prueba: {mae}")
+        print(f"Coeficiente de Determinación (R-cuadrado): {r2}")

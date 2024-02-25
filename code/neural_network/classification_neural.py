@@ -3,12 +3,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import optuna
 from tensorflow.keras import regularizers
+import matplotlib.pyplot as plt
+
 
 class ClassificationNeuralNetwork:
     def __init__(self, data):
         self.data = data
-        self.features = ['MinTemp', 'MaxTemp', 'Evaporation', 'Cloud9am', 'Cloud3pm', 'Temp9am', 'Temp3pm',
-                         'RainToday', 'RainTomorrow', 'RainfallTomorrow']
+        self.features = [column for column in data.columns if (column != 'RainTomorrow' or column !='RainfallTomorrow') ]
 
     def build_model(self, trial):
         model = tf.keras.Sequential()
@@ -72,3 +73,26 @@ class ClassificationNeuralNetwork:
         print(f"Recall en el conjunto de prueba: {recall}")
         print(f"F1-score en el conjunto de prueba: {f1}")
         print(f"Exactitud en el conjunto de prueba: {accuracy}")
+
+    def plot_learning_curves(self):
+        X = self.data[self.features]
+        y = self.data['RainTomorrow']
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+        model = self.build_model(optuna.trial.FixedTrial(self.optimize_hyperparameters()))
+
+        train_errors, val_errors = [], []
+        for m in range(1, len(X_train)):
+            model.fit(X_train[:m], y_train[:m], epochs=10, batch_size=32, validation_split=0.2, verbose=0)
+            y_train_predict = model.predict(X_train[:m])
+            y_val_predict = model.predict(X_test)
+            train_errors.append(1 - accuracy_score(y_train[:m], (y_train_predict > 0.5).astype(int).flatten()))
+            val_errors.append(1 - accuracy_score(y_test, (y_val_predict > 0.5).astype(int).flatten()))
+
+        plt.plot(train_errors, "r-+", linewidth=2, label="Conjunto de entrenamiento")
+        plt.plot(val_errors, "b-", linewidth=3, label="Conjunto de prueba")
+        plt.legend(loc="upper right", fontsize=14)
+        plt.xlabel("Tamaño del conjunto de entrenamiento", fontsize=14)
+        plt.ylabel("Error", fontsize=14)
+        plt.show()

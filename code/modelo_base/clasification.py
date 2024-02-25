@@ -89,7 +89,7 @@ class ClasificacionModelBase:
         """
         try:
             # Paso 1: Preparar los datos
-            X = self.data_clean[['RainToday']]  # Características relevantes
+            X = self.data_clean[[column for column in self.data_clean.columns if (column != 'RainTomorrow' or column !='RainfallTomorrow') ]]  # Características relevantes
             y = self.data_clean['RainTomorrow']  # Etiqueta: Lluvia sí/no
 
             # Paso 2: Dividir los datos en conjuntos de entrenamiento y prueba

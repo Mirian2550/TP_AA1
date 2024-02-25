@@ -67,15 +67,7 @@ class RegressionLineal:
             tuple: Una tupla que contiene x_test, y_test, y_pred y el modelo entrenado.
         """
         try:
-            """
-            'Date', 'Location', 'MinTemp', 'MaxTemp', 'Rainfall', 'Evaporation',
-       'Sunshine', 'WindGustDir', 'WindSpeed9am', 'WindSpeed3pm',
-       'Humidity9am', 'Humidity3pm', 'Pressure9am', 'Pressure3pm', 'Cloud9am',
-       'Cloud3pm', 'Temp9am', 'Temp3pm', 'RainToday', 'RainTomorrow',
-       
-            """
             features_to_exclude = ['RainTomorrow', 'WindGustDir','RainfallTomorrow']
-            #features_to_exclude = [ ]
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
@@ -147,35 +139,19 @@ class RegressionLineal:
 
     def classic(self):
         try:
-            columnas_caracteristicas = ['Rainfall', 'Humidity3pm',
-                                        'MinTemp', 'MaxTemp', 'Evaporation',
-                                        'Humidity9am', 'Temp9am', 'Temp3pm',
-                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
-                                        'Pressure9am', 'Pressure3pm'
+            columnas_caracteristicas = [
+                'Rainfall', 'Humidity3pm','Cloud3pm'
             ]
-            variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
-            y = self.data[variable_objetivo]
+            y = self.data['RainfallTomorrow']
 
             # Dividir los datos en conjuntos de entrenamiento y prueba
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
-            print(x_test)
             modelo = LinearRegression()
-            """
-             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
-            modelo = LogisticRegression(max_iter=10000)
-            modelo.fit(x_train, y_train)
-            y_pred = modelo.predict(x_test)
-            return x_test, y_test, y_pred, modelo
-            """
-
-
             # Entrenar el modelo
             modelo.fit(x_train, y_train)
-
             # Realizar predicciones en el conjunto de prueba
             y_pred = modelo.predict(x_test)
-
             return x_test, y_test, y_pred, modelo
 
         except Exception as e:
@@ -204,15 +180,9 @@ class RegressionLineal:
 
     def gradient_descent(self, learning_rate=0.01, num_iterations=1000):
         try:
-            columnas_caracteristicas = ['Rainfall',
-                                        'Humidity3pm',
-                                        'MinTemp',
-                                        'MaxTemp',
-                                        'Evaporation',
-                                        'Humidity9am', 'Temp9am', 'Temp3pm',
-                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
-                                        'Pressure9am', 'Pressure3pm'
-                                        ]
+            columnas_caracteristicas = [
+                'Rainfall', 'Humidity3pm','Cloud3pm'
+            ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -237,15 +207,9 @@ class RegressionLineal:
 
     def gradient_descent_optimize_hyperparameters(self, param_grid, cv=5, n_iter=10):
         try:
-            columnas_caracteristicas = ['Rainfall',
-                                        'Humidity3pm',
-                                        'MinTemp',
-                                        'MaxTemp',
-                                        'Evaporation',
-                                        'Humidity9am', 'Temp9am', 'Temp3pm',
-                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
-                                        'Pressure9am', 'Pressure3pm'
-                                        ]
+            columnas_caracteristicas = [
+                'Rainfall', 'Humidity3pm','Cloud3pm'
+            ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -281,15 +245,9 @@ class RegressionLineal:
 
     def ridge_regression(self, alpha=1.0):
         try:
-            columnas_caracteristicas = ['Rainfall',
-                                        'Humidity3pm',
-                                        'MinTemp',
-                                        'MaxTemp',
-                                        'Evaporation',
-                                        'Humidity9am', 'Temp9am', 'Temp3pm',
-                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
-                                        'Pressure9am', 'Pressure3pm'
-                                        ]
+            columnas_caracteristicas = [
+                'Rainfall', 'Humidity3pm','Cloud3pm'
+            ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -314,15 +272,9 @@ class RegressionLineal:
 
     def lasso_regression(self, alpha=1.0):
         try:
-            columnas_caracteristicas = ['Rainfall',
-                                        'Humidity3pm',
-                                        'MinTemp',
-                                        'MaxTemp',
-                                        'Evaporation',
-                                        'Humidity9am', 'Temp9am', 'Temp3pm',
-                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
-                                        'Pressure9am', 'Pressure3pm'
-                                        ]
+            columnas_caracteristicas = [
+                'Rainfall', 'Humidity3pm','Cloud3pm'
+            ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -347,15 +299,9 @@ class RegressionLineal:
 
     def elasticnet_regression(self, alpha=1.0, l1_ratio=0.5):
         try:
-            columnas_caracteristicas = ['Rainfall',
-                                        'Humidity3pm',
-                                        'MinTemp',
-                                        'MaxTemp',
-                                        'Evaporation',
-                                        'Humidity9am', 'Temp9am', 'Temp3pm',
-                                        'Cloud9am', 'Cloud3pm', 'Sunshine',
-                                        'Pressure9am', 'Pressure3pm'
-                                        ]
+            columnas_caracteristicas = [
+                'Rainfall', 'Humidity3pm','Cloud3pm'
+            ]
             variable_objetivo = 'RainfallTomorrow'
             x = self.data[columnas_caracteristicas]
             y = self.data[variable_objetivo]
@@ -392,15 +338,9 @@ class RegressionLineal:
         try:
             # Dividir los datos en conjuntos de entrenamiento y prueba
             X_train, X_test, y_train, y_test = train_test_split(
-                self.data[['Rainfall',
-                                    'Humidity3pm',
-                                    'MinTemp',
-                                    'MaxTemp',
-                                    'Evaporation',
-                                    'Humidity9am', 'Temp9am', 'Temp3pm',
-                                    'Cloud9am', 'Cloud3pm', 'Sunshine',
-                                    'Pressure9am', 'Pressure3pm'
-                                    ]], self.data['RainfallTomorrow'], test_size=0.2, random_state=42
+                self.data[[
+                'Rainfall', 'Humidity3pm','Cloud3pm'
+            ]], self.data['RainfallTomorrow'], test_size=0.2, random_state=42
             )
 
             x_test, y_test, y_pred, best_model = self._optimize_hyperparameters(
