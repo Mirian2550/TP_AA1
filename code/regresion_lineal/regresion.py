@@ -67,8 +67,8 @@ class RegressionLineal:
             tuple: Una tupla que contiene x_test, y_test, y_pred y el modelo entrenado.
         """
         try:
-            features_to_exclude = ['RainTomorrow', 'WindGustDir','RainfallTomorrow']
-            x = self.data.drop(features_to_exclude, axis=1)
+            features_to_exclude = ['RainTomorrow', 'WindGustDir','RainfallTomorrow', 'Date', 'Location']
+            x = [['Humidity3pm', 'Cloud3pm', 'Rainfall']]
             y = self.data['RainTomorrow']
             x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
             modelo = LogisticRegression(max_iter=10000)
@@ -81,7 +81,7 @@ class RegressionLineal:
 
     def logistic_balanced(self):
         try:
-            features_to_exclude = ['RainTomorrow', 'WindGustDir']
+            features_to_exclude = ['RainTomorrow', 'WindGustDir','RainfallTomorrow', 'Date', 'Location']
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
 
@@ -101,10 +101,7 @@ class RegressionLineal:
 
     def optimize_hyperparameters_logistic(self, param_grid, cv=5, n_iter=10):
         try:
-            # Excluir columnas no deseadas
-
-
-            features_to_exclude = ['RainTomorrow', 'WindGustDir']
+            features_to_exclude = ['RainTomorrow', 'WindGustDir','RainfallTomorrow', 'Date', 'Location']
             x = self.data.drop(features_to_exclude, axis=1)
             y = self.data['RainTomorrow']
 

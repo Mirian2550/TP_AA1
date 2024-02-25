@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 class ClassificationNeuralNetwork:
     def __init__(self, data):
         self.data = data
-        self.features = [column for column in data.columns if (column != 'RainTomorrow' or column !='RainfallTomorrow') ]
+        self.features = ['Humidity3pm', 'Cloud3pm', 'Rainfall']
+        
 
     def build_model(self, trial):
         model = tf.keras.Sequential()
