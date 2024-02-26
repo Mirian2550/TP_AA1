@@ -59,78 +59,48 @@ class RegressionLineal:
         plt.legend(loc='lower right')
         plt.show()
 
-    def logistic(self):
-        """
-        Entrena un modelo de regresión logística utilizando los datos preprocesados.
 
-        Returns:
-            tuple: Una tupla que contiene x_test, y_test, y_pred y el modelo entrenado.
-        """
+    def logistic(self, _x_train, _x_test, _y_train_classification, _y_test_classification):
         try:
-            x = self.data[['Humidity3pm', 'Cloud3pm', 'Rainfall']]
-
-            y = self.data['RainTomorrow']
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
             modelo = LogisticRegression(max_iter=10000)
-            modelo.fit(x_train, y_train)
-            y_pred = modelo.predict(x_test)
-            return x_test, y_test, y_pred, modelo
+            modelo.fit(_x_train, _y_train_classification)
+            y_pred = modelo.predict(_x_test)
+            return _x_test, _y_test_classification, y_pred, modelo
         except Exception as e:
             self.logger.error(f"Error en el entrenamiento de regresión logística: {str(e)}")
             raise ValueError(f"Error en el entrenamiento de regresión logística: {str(e)}")
 
-    def logistic_balanced(self):
+
+
+
+    def optimize_hyperparameters_logistic(self, param_grid, _x_train, _x_test, _y_train_classification, _y_test_classification, cv=5, n_iter=10):
         try:
-            x = self.data[['Humidity3pm', 'Cloud3pm', 'Rainfall']]
-            y = self.data['RainTomorrow']
-
-            # Calcular pesos de clases para balanceo
-            class_weights = compute_class_weight('balanced', classes=np.unique(y), y=y)
-
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-            modelo = LogisticRegression(max_iter=10000, class_weight=dict(zip(np.unique(y), class_weights)))
-            modelo.fit(x_train, y_train)
-            y_pred = modelo.predict(x_test)
-
-            return x_test, y_test, y_pred, modelo
-
-        except Exception as e:
-            self.logger.error(f"Error en el entrenamiento de regresión logística: {str(e)}")
-            raise ValueError(f"Error en el entrenamiento de regresión logística: {str(e)}")
-
-    def optimize_hyperparameters_logistic(self, param_grid, cv=5, n_iter=10):
-        try:
-            x = self.data[['Humidity3pm', 'Cloud3pm', 'Rainfall']]
-            y = self.data['RainTomorrow']
-
-            # Dividir los datos en conjuntos de entrenamiento y prueba
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-            # Normalizar características si es necesario
-            scaler = StandardScaler()
-            x_train = scaler.fit_transform(x_train)
-            x_test = scaler.transform(x_test)
-
-            # Crear modelo de regresión logística
-            modelo = LogisticRegression(max_iter=10000)
-
+            _y_train_classification = _y_train_classification.values.ravel()
+            _y_test_classification = _y_test_classification.values.ravel()
             # Configurar la búsqueda aleatoria de hiperparámetros
-            random_search = RandomizedSearchCV(modelo, param_distributions=param_grid, n_iter=n_iter, cv=cv)
+            random_search = RandomizedSearchCV(
+                LogisticRegression(max_iter=10000),
+                param_distributions=param_grid,
+                n_iter=n_iter,
+                cv=cv
+            )
 
             # Realizar la búsqueda aleatoria
-            random_search.fit(x_train, y_train)
+            random_search.fit(_x_train, _y_train_classification)
 
             # Obtener el mejor modelo
             best_model = random_search.best_estimator_
 
             # Realizar predicciones en el conjunto de prueba
-            y_pred = best_model.predict(x_test)
+            y_pred = best_model.predict(_x_test)
 
-            return x_test, y_test, y_pred, best_model
+            return _x_test, _y_test_classification, y_pred, best_model
 
         except Exception as e:
             print(f"Error en la función optimize_hyperparameters_logistic: {str(e)}")
             return None
+
+
 
     def classic(self, x_train, x_test, y_train_regression, y_test_regression):
         try:
@@ -241,32 +211,7 @@ class RegressionLineal:
             return None
 
 
-    """def ridge_regression(self, alpha=1.0):
-        try:
-            columnas_caracteristicas = [
-                'Rainfall', 'Humidity3pm','Cloud3pm'
-            ]
-            variable_objetivo = 'RainfallTomorrow'
-            x = self.data[columnas_caracteristicas]
-            y = self.data[variable_objetivo]
 
-            # Dividir los datos en conjuntos de entrenamiento y prueba
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-            # Crear una instancia de Ridge Regression
-            ridge_model = Ridge(alpha=alpha)
-
-            # Entrenar el modelo
-            ridge_model.fit(x_train, y_train)
-
-            # Realizar predicciones en el conjunto de prueba
-            y_pred = ridge_model.predict(x_test)
-
-            return x_test, y_test, y_pred, ridge_model
-
-        except Exception as e:
-            print(f"Error en la función ridge_regression: {str(e)}")
-            return None"""
     def ridge_regression(self, _x_train, _x_test, _y_train_regression, _y_test_regression, alpha=1.0):
         """
         Entrena un modelo de regresión Ridge.
@@ -419,25 +364,33 @@ class RegressionLineal:
 
 
 
+
     def _optimize_hyperparameters(self, model, param_grid, X_train, y_train, X_test, y_test):
-        # ...
+        try:
+            # Ajustar el modelo con búsqueda aleatoria
+            random_search = RandomizedSearchCV(model, param_distributions=param_grid, n_iter=10, cv=5)
+            random_search.fit(X_train, y_train)
 
-        # Ajustar el modelo con búsqueda aleatoria
-        random_search = RandomizedSearchCV(model, param_distributions=param_grid, n_iter=10, cv=5)
-        random_search.fit(X_train, y_train)
+            # Obtener los mejores hiperparámetros y el mejor modelo
+            best_params = random_search.best_params_
+            print(best_params)
+            best_model = random_search.best_estimator_
 
-        # Obtener los mejores hiperparámetros y el mejor modelo
-        best_params = random_search.best_params_
-        best_model = random_search.best_estimator_
+            # Realizar predicciones en el conjunto de prueba
+            y_pred = best_model.predict(X_test)
 
-        # Realizar predicciones en el conjunto de prueba
-        y_pred = best_model.predict(X_test)
-        #y_pred = lasso_model.predict(_x_test)
-        if isinstance(y_test, pd.DataFrame):
-            y_pred = y_test.squeeze()
-        if isinstance(y_pred, pd.DataFrame):
-            y_pred = y_pred.squeeze()
-        return X_test, y_test, y_pred, best_model
+            # Asegurarse de que y_test y y_pred sean Series o matrices unidimensionales
+            if isinstance(y_test, pd.DataFrame):
+                y_test = y_test.squeeze()
+            if isinstance(y_pred, pd.DataFrame):
+                y_pred = y_pred.squeeze()
+
+            return X_test, y_test, y_pred, best_model
+
+        except Exception as e:
+            print(f"Error en _optimize_hyperparameters: {str(e)}")
+            return None
+
 
     def metrics(self, y_true, y_pred):
         """
