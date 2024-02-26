@@ -152,6 +152,24 @@ class RegressionLineal:
         except Exception as e:
             print(f"Error en la función classic: {str(e)}")
             return None
+
+    """def classic(self, x_test, y_test):
+        try:
+            columnas_caracteristicas = [
+                'Rainfall', 'Humidity3pm', 'Cloud3pm'
+            ]
+            x_train = self.data[columnas_caracteristicas]
+            y_train = self.data['RainfallTomorrow']
+
+            modelo = LinearRegression()
+            # Entrenar el modelo
+            modelo.fit(x_train, y_train)
+            # Realizar predicciones en el conjunto de prueba
+            y_pred = modelo.predict(x_test)
+            return y_pred, modelo
+        except Exception as e:
+            print(f"Error: {e}")
+            return None, None"""
     
     def cross_validate(self, x_test, y_test, modelo, cv=5):
         try:

@@ -42,10 +42,6 @@ class Clean:
 
     def process(self):
         try:
-            # Eliminación de registros con datos nulos/faltantes en variables booleanas
-            # Se eliminan porque constituyen menos de un 6% de los datos
-            # y no afecta la representatividad de los datos
-            self.data.dropna(subset=['RainToday', 'RainTomorrow'], inplace=True)
             self._process_numerical_columns()
             self._clean()
             return self.data_clean
