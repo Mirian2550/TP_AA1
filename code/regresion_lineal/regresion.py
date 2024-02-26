@@ -337,7 +337,7 @@ class RegressionLineal:
         except Exception as e:
             print(f"Error en la función lasso_regression: {str(e)}")
             return None
-    def elasticnet_regression(self, alpha=1.0, l1_ratio=0.5):
+    """def elasticnet_regression(self, alpha=1.0, l1_ratio=0.5):
         try:
             columnas_caracteristicas = [
                 'Rainfall', 'Humidity3pm','Cloud3pm'
@@ -362,7 +362,47 @@ class RegressionLineal:
 
         except Exception as e:
             print(f"Error en la función elasticnet_regression: {str(e)}")
+            return None"""
+
+    def elasticnet_regression(self, _x_train, _x_test, _y_train_regression, _y_test_regression, alpha=1.0, l1_ratio=0.5):
+        """
+        Entrena un modelo de regresión ElasticNet.
+
+        Args:
+            alpha (float, optional): Parámetro de regularización. Por defecto es 1.0.
+            l1_ratio (float, optional): Parámetro de mezcla L1/L2. Por defecto es 0.5.
+            _x_train (array-like, optional): Conjunto de características de entrenamiento.
+            _x_test (array-like, optional): Conjunto de características de prueba.
+            _y_train_regression (array-like, optional): Etiquetas de regresión del conjunto de entrenamiento.
+            _y_test_regression (array-like, optional): Etiquetas de regresión del conjunto de prueba.
+
+        Returns:
+            tuple: Una tupla que contiene _x_test, _y_test_regression, y_pred y el modelo entrenado.
+        """
+        try:
+            if _x_train is None or _x_test is None or _y_train_regression is None or _y_test_regression is None:
+                print("Se deben proporcionar los conjuntos de datos de entrenamiento y prueba.")
+                return None
+
+            # Crear una instancia de ElasticNet Regression
+            elasticnet_model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
+
+            # Entrenar el modelo
+            elasticnet_model.fit(_x_train, _y_train_regression)
+
+            # Realizar predicciones en el conjunto de prueba
+            y_pred = elasticnet_model.predict(_x_test)
+            if isinstance(_y_test_regression, pd.DataFrame):
+                _y_test_regression = _y_test_regression.squeeze()
+            if isinstance(y_pred, pd.DataFrame):
+                y_pred = y_pred.squeeze()
+
+            return _x_test, _y_test_regression, y_pred, elasticnet_model
+
+        except Exception as e:
+            print(f"Error en la función elasticnet_regression: {str(e)}")
             return None
+
 
     def optimize_hyperparameters_(self, model_name, param_grid, _x_train, _x_test, _y_train_regression, _y_test_regression):
         """
