@@ -132,6 +132,7 @@ class RegressionLineal:
             print(f"Error en la función optimize_hyperparameters_logistic: {str(e)}")
             return None
 
+    """
     def classic(self):
         try:
             columnas_caracteristicas = [
@@ -152,18 +153,32 @@ class RegressionLineal:
         except Exception as e:
             print(f"Error en la función classic: {str(e)}")
             return None
+    """
+    def classic(self, x_train, x_test, y_train_regression, y_test_regression):
+        try:
+            # Llamar al método para entrenar y evaluar el modelo de regresión
+            y_test, y_pred, modelo_regresion = self.teacher_classic(x_train, x_test, y_train_regression, y_test_regression)
 
+            # Calcular y mostrar las métricas
+            self.logic_metrics(y_test, y_pred)
+
+            # También puedes devolver el modelo entrenado si lo necesitas fuera de la función
+            return modelo_regresion
+
+        except Exception as e:
+            print(f"Error en la función classic: {str(e)}")
+            return None
 
     def teacher_classic(self, x_train, x_test, y_train_regression, y_test_regression):
         try:
-            modelo = LinearRegression()
+            modelo_regresion = LinearRegression()
+            modelo_regresion.fit(x_train, y_train_regression)
 
-            # Entrenar el modelo
-            modelo.fit(x_train[['Humidity3pm', 'Cloud3pm', 'Rainfall']], y_train_regression)
-            # Realizar predicciones en el conjunto de prueba
-            y_pred = modelo.predict(x_test[['Humidity3pm', 'Cloud3pm', 'Rainfall']])
+            # Hacer predicciones en el conjunto de prueba
+            y_pred = modelo_regresion.predict(x_test)
 
-            return y_test_regression, y_pred, modelo
+
+            return y_test_regression, y_pred, modelo_regresion
 
         except Exception as e:
             print(f"Error en la función classic: {str(e)}")

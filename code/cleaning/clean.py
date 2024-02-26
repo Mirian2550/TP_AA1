@@ -68,9 +68,9 @@ class Clean:
             datos_filtrados.loc[:, 'Cloud3pm'] = datos_filtrados.groupby('Location')['Cloud3pm'].ffill()
             datos_filtrados.loc[:, 'Evaporation'] = datos_filtrados.groupby('Location')['Evaporation'].ffill()
             datos_filtrados.loc[:, 'Sunshine'] = datos_filtrados.groupby('Location')['Sunshine'].ffill()
-            datos_filtrados.loc[:, 'WindGustDir'] = datos_filtrados.groupby('Location')['WindGustDir'].ffill()
-            datos_filtrados.loc[:, 'WindDir9am'] = datos_filtrados.groupby('Location')['WindDir9am'].ffill()
-            datos_filtrados.loc[:, 'WindDir3pm'] = datos_filtrados.groupby('Location')['WindDir3pm'].ffill()
+            #datos_filtrados.loc[:, 'WindGustDir'] = datos_filtrados.groupby('Location')['WindGustDir'].ffill()
+            #datos_filtrados.loc[:, 'WindDir9am'] = datos_filtrados.groupby('Location')['WindDir9am'].ffill()
+            #datos_filtrados.loc[:, 'WindDir3pm'] = datos_filtrados.groupby('Location')['WindDir3pm'].ffill()
             datos_filtrados.loc[:, 'WindSpeed9am'] = datos_filtrados.groupby('Location')['WindSpeed9am'].ffill()
             datos_filtrados.loc[:, 'WindSpeed3pm'] = datos_filtrados.groupby('Location')['WindSpeed3pm'].ffill()
             datos_filtrados.loc[:, 'Humidity9am'] = datos_filtrados.groupby('Location')['Humidity9am'].ffill()
@@ -78,6 +78,7 @@ class Clean:
             datos_filtrados.loc[:, 'Pressure3pm'] = datos_filtrados.groupby('Location')['Pressure3pm'].ffill()
             datos_filtrados.loc[:, 'Cloud9am'] = datos_filtrados.groupby('Location')['Cloud9am'].ffill()
             # Realizamos un mapeo numérico de la dirección del viento para poder realizar el gráfico de correlación:
+            """
             direccion_mapping = {
                 'E': 0, 'ENE': 22.5, 'NE': 45, 'NNE': 67.5,
                 'N': 90, 'NNW': 112.5, 'NW': 135, 'WNW': 157.5,
@@ -87,12 +88,9 @@ class Clean:
             datos_filtrados['WindGustDir'] = datos_filtrados['WindGustDir'].map(direccion_mapping)
             datos_filtrados['WindDir9am'] = datos_filtrados['WindDir9am'].map(direccion_mapping)
             datos_filtrados['WindDir3pm'] = datos_filtrados['WindDir3pm'].map(direccion_mapping)
+            """
             datos_filtrados.loc[:, 'RainToday'] = datos_filtrados['RainToday'].fillna(0)
-
             self.data_clean = datos_filtrados
-
-            columnas_nulas = self.data_clean.columns[self.data_clean.isnull().any()]
-
             self.data_clean.to_csv('data/weatherAUS_clean.csv', index=False)
             print("Archivo guardado exitosamente en 'data/weatherAUS_clean.csv'")
 
