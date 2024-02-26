@@ -5,8 +5,10 @@ import os
 path_dir = os.path.dirname(os.path.abspath(__file__))
 # Cargar los modelos y los datos limpios
 print(path_dir)
-pipeline_regresion = joblib.load('weather_regression.joblib')
-pipeline_clasificacion = joblib.load('weather_classification.joblib')
+weather_regression=os.path.join(path_dir, 'weather_regression.joblib')
+pipeline_regresion = joblib.load(weather_regression)
+weather_clasificacion=os.path.join(path_dir, 'weather_classification.joblib')
+pipeline_clasificacion = joblib.load(weather_clasificacion)
 data = pd.read_csv('data/weatherAUS_clean.csv')
 
 # Obtener las columnas esperadas por el modelo
