@@ -337,32 +337,7 @@ class RegressionLineal:
         except Exception as e:
             print(f"Error en la función lasso_regression: {str(e)}")
             return None
-    """def elasticnet_regression(self, alpha=1.0, l1_ratio=0.5):
-        try:
-            columnas_caracteristicas = [
-                'Rainfall', 'Humidity3pm','Cloud3pm'
-            ]
-            variable_objetivo = 'RainfallTomorrow'
-            x = self.data[columnas_caracteristicas]
-            y = self.data[variable_objetivo]
 
-            # Dividir los datos en conjuntos de entrenamiento y prueba
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-            # Crear una instancia de ElasticNet Regression
-            elasticnet_model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
-
-            # Entrenar el modelo
-            elasticnet_model.fit(x_train, y_train)
-
-            # Realizar predicciones en el conjunto de prueba
-            y_pred = elasticnet_model.predict(x_test)
-
-            return x_test, y_test, y_pred, elasticnet_model
-
-        except Exception as e:
-            print(f"Error en la función elasticnet_regression: {str(e)}")
-            return None"""
 
     def elasticnet_regression(self, _x_train, _x_test, _y_train_regression, _y_test_regression, alpha=1.0, l1_ratio=0.5):
         """
