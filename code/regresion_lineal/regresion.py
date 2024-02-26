@@ -241,7 +241,7 @@ class RegressionLineal:
             return None
 
 
-    def ridge_regression(self, alpha=1.0):
+    """def ridge_regression(self, alpha=1.0):
         try:
             columnas_caracteristicas = [
                 'Rainfall', 'Humidity3pm','Cloud3pm'
@@ -266,34 +266,41 @@ class RegressionLineal:
 
         except Exception as e:
             print(f"Error en la función ridge_regression: {str(e)}")
-            return None
+            return None"""
+    def ridge_regression(self, _x_train, _x_test, _y_train_regression, _y_test_regression, alpha=1.0):
+        """
+        Entrena un modelo de regresión Ridge.
 
-    """def lasso_regression(self, alpha=1.0):
+        Args:
+            alpha (float, optional): Parámetro de regularización. Por defecto es 1.0.
+            _x_train (array-like, optional): Conjunto de características de entrenamiento.
+            _x_test (array-like, optional): Conjunto de características de prueba.
+            _y_train_regression (array-like, optional): Etiquetas de regresión del conjunto de entrenamiento.
+            _y_test_regression (array-like, optional): Etiquetas de regresión del conjunto de prueba.
+
+        Returns:
+            tuple: Una tupla que contiene _x_test, _y_test_regression, y_pred y el modelo entrenado.
+        """
         try:
-            columnas_caracteristicas = [
-                'Rainfall', 'Humidity3pm','Cloud3pm'
-            ]
-            variable_objetivo = 'RainfallTomorrow'
-            x = self.data[columnas_caracteristicas]
-            y = self.data[variable_objetivo]
+            if _x_train is None or _x_test is None or _y_train_regression is None or _y_test_regression is None:
+                print("Se deben proporcionar los conjuntos de datos de entrenamiento y prueba.")
+                return None
 
-            # Dividir los datos en conjuntos de entrenamiento y prueba
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-            # Crear una instancia de Lasso Regression
-            lasso_model = Lasso(alpha=alpha)
+            # Crear una instancia de Ridge Regression
+            ridge_model = Ridge(alpha=alpha)
 
             # Entrenar el modelo
-            lasso_model.fit(x_train, y_train)
+            ridge_model.fit(_x_train, _y_train_regression)
 
             # Realizar predicciones en el conjunto de prueba
-            y_pred = lasso_model.predict(x_test)
+            y_pred = ridge_model.predict(_x_test)
 
-            return x_test, y_test, y_pred, lasso_model
+            return _x_test, _y_test_regression, y_pred, ridge_model
 
         except Exception as e:
-            print(f"Error en la función lasso_regression: {str(e)}")
-            return None"""
+            print(f"Error en la función ridge_regression: {str(e)}")
+            return None
+
     def lasso_regression(self, _x_train, _x_test, _y_train_regression, _y_test_regression, alpha=1.0):
         """
         Entrena un modelo de regresión Lasso.
@@ -311,13 +318,19 @@ class RegressionLineal:
         try:
             # Crear una instancia de Lasso Regression
             lasso_model = Lasso(alpha=alpha)
-            _y_train_regression = np.ravel(_y_train_regression)
-            _x_train = np.ravel(_x_train)
+
             # Entrenar el modelo
             lasso_model.fit(_x_train, _y_train_regression)
 
             # Realizar predicciones en el conjunto de prueba
             y_pred = lasso_model.predict(_x_test)
+            if isinstance(_y_test_regression, pd.DataFrame):
+                _y_test_regression = _y_test_regression.squeeze()
+            if isinstance(y_pred, pd.DataFrame):
+                y_pred = y_pred.squeeze()
+            # Calcular las métricas
+            print('Metricas lasso')
+            self.metrics(_y_test_regression, y_pred)
 
             return _x_test, _y_test_regression, y_pred, lasso_model
 
@@ -351,32 +364,45 @@ class RegressionLineal:
             print(f"Error en la función elasticnet_regression: {str(e)}")
             return None
 
-    def optimize_hyperparameters(self, model_name, param_grid):
-        if model_name == 'Lasso':
-            model = Lasso()
-        elif model_name == 'Ridge':
-            model = Ridge()
-        elif model_name == 'ElasticNet':
-            model = ElasticNet()
-        else:
-            print(f"Modelo no válido: {model_name}")
-            return None
+    def optimize_hyperparameters_(self, model_name, param_grid, _x_train, _x_test, _y_train_regression, _y_test_regression):
+        """
+        Optimiza los hiperparámetros de un modelo de regresión.
 
+        Args:
+            model_name (str): Nombre del modelo ('Lasso', 'Ridge' o 'ElasticNet').
+            param_grid (dict): Diccionario con los hiperparámetros a ajustar y los rangos de valores para la búsqueda.
+            _x_train (array-like): Conjunto de características de entrenamiento.
+            _x_test (array-like): Conjunto de características de prueba.
+            _y_train_regression (array-like): Etiquetas de regresión del conjunto de entrenamiento.
+            _y_test_regression (array-like): Etiquetas de regresión del conjunto de prueba.
+
+        Returns:
+            tuple: Una tupla que contiene x_test, y_test, y_pred y el mejor modelo entrenado.
+        """
         try:
-            # Dividir los datos en conjuntos de entrenamiento y prueba
-            X_train, X_test, y_train, y_test = train_test_split(
-                self.data[[
-                'Rainfall', 'Humidity3pm','Cloud3pm'
-            ]], self.data['RainfallTomorrow'], test_size=0.2, random_state=42
+            if model_name == 'Lasso':
+                model = Lasso()
+            elif model_name == 'Ridge':
+                model = Ridge()
+            elif model_name == 'ElasticNet':
+                model = ElasticNet()
+            else:
+                print(f"Modelo no válido: {model_name}")
+                return None
+
+            # Optimizar hiperparámetros
+            x_test, y_test, y_pred, best_model = self._optimize_hyperparameters(
+                model, param_grid, _x_train, _y_train_regression, _x_test, _y_test_regression
             )
 
-            x_test, y_test, y_pred, best_model = self._optimize_hyperparameters(
-                model, param_grid, X_train, y_train, X_test, y_test
-            )
             return x_test, y_test, y_pred, best_model
+
         except Exception as e:
             print(f"Error en optimize_hyperparameters: {str(e)}")
             return None
+
+
+
 
     def _optimize_hyperparameters(self, model, param_grid, X_train, y_train, X_test, y_test):
         # ...
@@ -391,7 +417,11 @@ class RegressionLineal:
 
         # Realizar predicciones en el conjunto de prueba
         y_pred = best_model.predict(X_test)
-
+        #y_pred = lasso_model.predict(_x_test)
+        if isinstance(y_test, pd.DataFrame):
+            y_pred = y_test.squeeze()
+        if isinstance(y_pred, pd.DataFrame):
+            y_pred = y_pred.squeeze()
         return X_test, y_test, y_pred, best_model
 
     def metrics(self, y_true, y_pred):
@@ -420,5 +450,7 @@ class RegressionLineal:
         print(f"MAE: {mae}")
         print(f"MAPE: {mape}")
 
+
+#%%
 
 #%%
