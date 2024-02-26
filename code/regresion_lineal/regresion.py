@@ -132,54 +132,12 @@ class RegressionLineal:
             print(f"Error en la función optimize_hyperparameters_logistic: {str(e)}")
             return None
 
-    """
-    def classic(self):
-        try:
-            columnas_caracteristicas = [
-                'Rainfall', 'Humidity3pm','Cloud3pm'
-            ]
-            x = self.data[columnas_caracteristicas]
-            y = self.data['RainfallTomorrow']
-
-            # Dividir los datos en conjuntos de entrenamiento y prueba
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
-            modelo = LinearRegression()
-            # Entrenar el modelo
-            modelo.fit(x_train, y_train)
-            # Realizar predicciones en el conjunto de prueba
-            y_pred = modelo.predict(x_test)
-            return x_test, y_test, y_pred, modelo
-
-        except Exception as e:
-            print(f"Error en la función classic: {str(e)}")
-            return None
-    """
     def classic(self, x_train, x_test, y_train_regression, y_test_regression):
-        try:
-            # Llamar al método para entrenar y evaluar el modelo de regresión
-            y_test, y_pred, modelo_regresion = self.teacher_classic(x_train, x_test, y_train_regression, y_test_regression)
-
-            # Calcular y mostrar las métricas
-            self.logic_metrics(y_test, y_pred)
-
-            # También puedes devolver el modelo entrenado si lo necesitas fuera de la función
-            return modelo_regresion
-
-        except Exception as e:
-            print(f"Error en la función classic: {str(e)}")
-            return None
-
-    def teacher_classic(self, x_train, x_test, y_train_regression, y_test_regression):
         try:
             modelo_regresion = LinearRegression()
             modelo_regresion.fit(x_train, y_train_regression)
-
-            # Hacer predicciones en el conjunto de prueba
             y_pred = modelo_regresion.predict(x_test)
-
-
-            return y_test_regression, y_pred, modelo_regresion
-
+            return x_test, y_test_regression, y_pred, modelo_regresion
         except Exception as e:
             print(f"Error en la función classic: {str(e)}")
             raise ValueError("Error en la función classic")
@@ -205,17 +163,26 @@ class RegressionLineal:
             print(f"Error en la función cross_validate: {str(e)}")
             return None
 
-    def gradient_descent(self, learning_rate=0.01, num_iterations=1000):
-        try:
-            columnas_caracteristicas = [
-                'Rainfall', 'Humidity3pm','Cloud3pm'
-            ]
-            variable_objetivo = 'RainfallTomorrow'
-            x = self.data[columnas_caracteristicas]
-            y = self.data[variable_objetivo]
 
-            # Dividir los datos en conjuntos de entrenamiento y prueba
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    def gradient_descent(self, x_train, x_test, y_train, y_test, learning_rate=0.01, num_iterations=1000):
+        """
+        Entrena un modelo de regresión lineal con descenso de gradiente estocástico utilizando los conjuntos de entrenamiento y realiza predicciones en el conjunto de prueba.
+
+        Args:
+            x_train (array-like): Conjunto de características de entrenamiento.
+            x_test (array-like): Conjunto de características de prueba.
+            y_train (array-like): Etiquetas de regresión del conjunto de entrenamiento.
+            y_test (array-like): Etiquetas de regresión del conjunto de prueba.
+            learning_rate (float, optional): Tasa de aprendizaje para el descenso de gradiente. Por defecto es 0.01.
+            num_iterations (int, optional): Número de iteraciones del descenso de gradiente. Por defecto es 1000.
+
+        Returns:
+            tuple: Una tupla que contiene x_test, y_test, y_pred y el modelo entrenado.
+        """
+        try:
+            # Convertir las etiquetas de regresión a arreglos unidimensionales
+            y_train = np.ravel(y_train)
+            y_test = np.ravel(y_test)
 
             # Crear modelo de regresión lineal con descenso de gradiente estocástico
             modelo = SGDRegressor(learning_rate='constant', eta0=learning_rate, max_iter=num_iterations)
@@ -232,28 +199,31 @@ class RegressionLineal:
             print(f"Error en la función gradient_descent: {str(e)}")
             return None
 
-    def gradient_descent_optimize_hyperparameters(self, param_grid, cv=5, n_iter=10):
+
+    def gradient_descent_optimize_hyperparameters(self, param_grid, x_train, x_test, y_train, y_test, cv=5, n_iter=10):
+        """
+        Entrena un modelo de regresión lineal con descenso de gradiente estocástico y optimiza sus hiperparámetros utilizando búsqueda aleatoria.
+
+        Args:
+            param_grid (dict): Diccionario con los hiperparámetros a ajustar y los rangos de valores para la búsqueda aleatoria.
+            x_train (array-like): Conjunto de características de entrenamiento.
+            x_test (array-like): Conjunto de características de prueba.
+            y_train (array-like): Etiquetas de regresión del conjunto de entrenamiento.
+            y_test (array-like): Etiquetas de regresión del conjunto de prueba.
+            cv (int, optional): Número de divisiones para la validación cruzada. Por defecto es 5.
+            n_iter (int, optional): Número de iteraciones de búsqueda aleatoria. Por defecto es 10.
+
+        Returns:
+            tuple: Una tupla que contiene x_test, y_test, y_pred y el mejor modelo entrenado.
+        """
         try:
-            columnas_caracteristicas = [
-                'Rainfall', 'Humidity3pm','Cloud3pm'
-            ]
-            variable_objetivo = 'RainfallTomorrow'
-            x = self.data[columnas_caracteristicas]
-            y = self.data[variable_objetivo]
-
-            # Dividir los datos en conjuntos de entrenamiento y prueba
-            x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-            # Normalizar características
-            scaler = StandardScaler()
-            x_train = scaler.fit_transform(x_train)
-            x_test = scaler.transform(x_test)
-
-            # Inicializar el modelo
-            modelo = SGDRegressor(learning_rate='constant', eta0=0.01, max_iter=1000)
+            # Convertir y_train y y_test a arrays unidimensionales si es necesario
+            y_train = np.ravel(y_train)
+            y_test = np.ravel(y_test)
 
             # Configurar la búsqueda aleatoria de hiperparámetros
-            random_search = RandomizedSearchCV(modelo, param_distributions=param_grid, n_iter=n_iter, cv=cv)
+            random_search = RandomizedSearchCV(SGDRegressor(learning_rate='constant', eta0=0.01, max_iter=1000),
+                                               param_distributions=param_grid, n_iter=n_iter, cv=cv)
 
             # Realizar la búsqueda aleatoria
             random_search.fit(x_train, y_train)
@@ -267,8 +237,9 @@ class RegressionLineal:
             return x_test, y_test, y_pred, best_model
 
         except Exception as e:
-            print(f"Error en la función optimize_hyperparameters: {str(e)}")
+            print(f"Error en la función gradient_descent_optimize_hyperparameters: {str(e)}")
             return None
+
 
     def ridge_regression(self, alpha=1.0):
         try:
@@ -297,7 +268,7 @@ class RegressionLineal:
             print(f"Error en la función ridge_regression: {str(e)}")
             return None
 
-    def lasso_regression(self, alpha=1.0):
+    """def lasso_regression(self, alpha=1.0):
         try:
             columnas_caracteristicas = [
                 'Rainfall', 'Humidity3pm','Cloud3pm'
@@ -322,8 +293,37 @@ class RegressionLineal:
 
         except Exception as e:
             print(f"Error en la función lasso_regression: {str(e)}")
-            return None
+            return None"""
+    def lasso_regression(self, _x_train, _x_test, _y_train_regression, _y_test_regression, alpha=1.0):
+        """
+        Entrena un modelo de regresión Lasso.
 
+        Args:
+            _x_train (array-like): Conjunto de características de entrenamiento.
+            _x_test (array-like): Conjunto de características de prueba.
+            _y_train_regression (array-like): Etiquetas de regresión del conjunto de entrenamiento.
+            _y_test_regression (array-like): Etiquetas de regresión del conjunto de prueba.
+            alpha (float, optional): Parámetro de regularización. Por defecto es 1.0.
+
+        Returns:
+            tuple: Una tupla que contiene _x_test, _y_test_regression, y_pred y el modelo entrenado.
+        """
+        try:
+            # Crear una instancia de Lasso Regression
+            lasso_model = Lasso(alpha=alpha)
+            _y_train_regression = np.ravel(_y_train_regression)
+            _x_train = np.ravel(_x_train)
+            # Entrenar el modelo
+            lasso_model.fit(_x_train, _y_train_regression)
+
+            # Realizar predicciones en el conjunto de prueba
+            y_pred = lasso_model.predict(_x_test)
+
+            return _x_test, _y_test_regression, y_pred, lasso_model
+
+        except Exception as e:
+            print(f"Error en la función lasso_regression: {str(e)}")
+            return None
     def elasticnet_regression(self, alpha=1.0, l1_ratio=0.5):
         try:
             columnas_caracteristicas = [
@@ -396,24 +396,29 @@ class RegressionLineal:
 
     def metrics(self, y_true, y_pred):
         """
-        Evalúa un modelo de regresión y calcula diversas métricas.
+        Evalúa un modelo de regresión y muestra diversas métricas.
 
         Args:
             y_true (array-like): Valores reales u observados.
             y_pred (array-like): Valores predichos por el modelo.
-
-        Returns:
-            dict: Un diccionario que contiene las métricas calculadas, incluyendo MSE, R^2, RMSE, MAE y MAPE.
         """
         mse = mean_squared_error(y_true, y_pred)
         r2 = r2_score(y_true, y_pred)
         rmse = np.sqrt(mse)
         mae = np.mean(np.abs(y_true - y_pred))
-        mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-        return {
-            "MSE": mse,
-            "R2": r2,
-            "RMSE": rmse,
-            "MAE": mae,
-            "MAPE": mape
-        }
+
+        # Calcular MAPE solo si no hay ceros en y_true
+        if 0 in y_true:
+            mape = np.nan  # Si hay ceros, establecer MAPE como NaN (Not a Number)
+        else:
+            mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+
+        # Imprimir las métricas
+        print(f"MSE: {mse}")
+        print(f"R^2: {r2}")
+        print(f"RMSE: {rmse}")
+        print(f"MAE: {mae}")
+        print(f"MAPE: {mape}")
+
+
+#%%
