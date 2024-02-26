@@ -131,7 +131,7 @@ class RegressionLineal:
         except Exception as e:
             print(f"Error en la función optimize_hyperparameters_logistic: {str(e)}")
             return None
-    """
+
     def classic(self):
         try:
             columnas_caracteristicas = [
@@ -153,8 +153,8 @@ class RegressionLineal:
             print(f"Error en la función classic: {str(e)}")
             return None
 
-    """
-    def classic(self, x_train, x_test, y_train_regression, y_test_regression):
+
+    def teacher_classic(self, x_train, x_test, y_train_regression, y_test_regression):
         try:
             modelo = LinearRegression()
 
