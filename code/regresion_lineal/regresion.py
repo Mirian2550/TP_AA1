@@ -157,15 +157,12 @@ class RegressionLineal:
     def classic(self, x_train, x_test, y_train_regression, y_test_regression):
         try:
             modelo = LinearRegression()
-            print("nulitos en x_train",x_train.isna().sum())
-            print("nulitos en x_test",x_test.isna().sum())
-            print("nulitos en y_train_regression", y_train_regression.isna().sum())
-            print("nulitos en y_test_regression", y_test_regression.isna().sum())
+
             # Entrenar el modelo
             modelo.fit(x_train[['Humidity3pm', 'Cloud3pm', 'Rainfall']], y_train_regression)
             # Realizar predicciones en el conjunto de prueba
-            y_pred = modelo.predict(x_test)
-            print(f"El modelo",y_pred)
+            y_pred = modelo.predict(x_test[['Humidity3pm', 'Cloud3pm', 'Rainfall']])
+
             return y_test_regression, y_pred, modelo
 
         except Exception as e:
