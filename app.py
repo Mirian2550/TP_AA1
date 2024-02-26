@@ -2,13 +2,24 @@ import streamlit as st
 import joblib
 import pandas as pd
 import os
+
+# Obtener el directorio actual de trabajo
+path_dir = os.getcwd()
+
+# Rutas de los archivos de los modelos
+#weather_regression = os.path.join(path_dir, )
+#weather_classification = os.path.join(path_dir, 'weather_classification.joblib')
+
+# Cargar los modelos y los datos limpios
+
+import os
 path_dir = os.path.dirname(os.path.abspath(__file__))
 # Cargar los modelos y los datos limpios
-print(path_dir)
-weather_regression=os.path.join(path_dir, 'weather_regression.joblib')
+weather_regression = os.path.join(path_dir, 'weather_regression.joblib')
 pipeline_regresion = joblib.load(weather_regression)
-weather_clasificacion=os.path.join(path_dir, 'weather_classification.joblib')
-pipeline_clasificacion = joblib.load(weather_clasificacion)
+weather_classification=os.path.join(path_dir, 'weather_classification.joblib')
+pipeline_clasificacion = joblib.load(weather_classification)
+#pipeline_clasificacion = joblib.load('/Users/pepeargentoo/TP_AA1/weather_classification.joblib')
 data = pd.read_csv('data/weatherAUS_clean.csv')
 
 # Obtener las columnas esperadas por el modelo
@@ -27,6 +38,7 @@ data_para_predecir = pd.DataFrame([sliders])
 
 # Realizar la predicción de clasificación
 prediccion_clasificacion = pipeline_clasificacion.predict(data_para_predecir)
+
 # Realizar la predicción de regresión si clasificación indica que lloverá
 prediccion_regresion = None
 if prediccion_clasificacion[0] == 1:
