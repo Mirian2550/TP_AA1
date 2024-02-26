@@ -15,7 +15,7 @@ from sklearn.utils.class_weight import compute_class_weight
 
 
 class RegressionLineal:
-    def __init__(self, data):
+    def __init__(self, data=None):
         self.data = data
         self.logger = logging.getLogger("regression")
         self.logger.setLevel(logging.INFO)
@@ -131,7 +131,7 @@ class RegressionLineal:
         except Exception as e:
             print(f"Error en la función optimize_hyperparameters_logistic: {str(e)}")
             return None
-
+    """
     def classic(self):
         try:
             columnas_caracteristicas = [
@@ -153,23 +153,20 @@ class RegressionLineal:
             print(f"Error en la función classic: {str(e)}")
             return None
 
-    """def classic(self, x_test, y_test):
+    """
+    def classic(self, x_train, x_test, y_train_regression, y_test_regression):
         try:
-            columnas_caracteristicas = [
-                'Rainfall', 'Humidity3pm', 'Cloud3pm'
-            ]
-            x_train = self.data[columnas_caracteristicas]
-            y_train = self.data['RainfallTomorrow']
-
             modelo = LinearRegression()
             # Entrenar el modelo
-            modelo.fit(x_train, y_train)
+            modelo.fit(x_train, y_train_regression)
             # Realizar predicciones en el conjunto de prueba
             y_pred = modelo.predict(x_test)
-            return y_pred, modelo
+            print(f"El modelo",y_pred)
+            return y_test_regression, y_pred, modelo
+
         except Exception as e:
-            print(f"Error: {e}")
-            return None, None"""
+            print(f"Error en la función classic: {str(e)}")
+            return None
     
     def cross_validate(self, x_test, y_test, modelo, cv=5):
         try:

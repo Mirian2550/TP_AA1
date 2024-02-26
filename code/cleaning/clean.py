@@ -87,9 +87,6 @@ class Clean:
             datos_filtrados['WindDir9am'] = datos_filtrados['WindDir9am'].map(direccion_mapping)
             datos_filtrados['WindDir3pm'] = datos_filtrados['WindDir3pm'].map(direccion_mapping)
             datos_filtrados.loc[:, 'RainToday'] = datos_filtrados['RainToday'].fillna(0)
-            datos_filtrados.loc[:, 'RainTomorrow'] = datos_filtrados['RainTomorrow'].fillna(0) 
-            median_rainfall = datos_filtrados['RainfallTomorrow'].median() 
-            datos_filtrados.loc[:, 'RainfallTomorrow'] = datos_filtrados['RainfallTomorrow'].fillna(median_rainfall) # Reemplazamos por la mediana para que no modifique el promedio
 
             self.data_clean = datos_filtrados
 
