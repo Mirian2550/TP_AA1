@@ -44,6 +44,7 @@ class Clean:
         try:
             self._process_numerical_columns()
             self._clean()
+            self.data_clean.info()
             return self.data_clean
         except Exception as e:
             self.logger.error(f"Error en la procesamiento de datos: {str(e)}")
@@ -98,3 +99,5 @@ class Clean:
         except Exception as e:
             self.logger.error(f"Error en la limpieza de datos: {str(e)}")
             raise ValueError(f"Error en la limpieza de datos: {str(e)}")
+
+#%%
